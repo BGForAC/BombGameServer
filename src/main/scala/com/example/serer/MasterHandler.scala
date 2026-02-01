@@ -1,6 +1,7 @@
 package com.example.serer
 
-import com.example.commands.{IPlayerCommand, ISystemCommand}
+import com.example.commands.{CmdType, IPlayerCommand, ISystemCommand}
+import com.example.exception.BusinessException
 import com.example.message.Message
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
@@ -15,31 +16,45 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
   private val clsCache = mutable.Map[String, Object]()
   private val methodCache = mutable.Map[(String, String), java.lang.reflect.Method]()
 
+  val logFilterCmds: Set[String] = Set(f"${CmdType.MOVE}%04X", f"${CmdType.HEARTBEAT}%04X")
+
   override def channelRead0(ctx: ChannelHandlerContext, message: Message): Unit = {
     val channel = ctx.channel()
-    val cmdHex = message.getCommand.toHexString
-    val cmd = cmdHex.reverse.padTo(4, '0').reverse.mkString
-    println(s"Received message with command: 0x$cmd from channel: $channel")
+    val cmd = f"${message.getCommand}%04X"
+    if (!logFilterCmds.contains(cmd)) println(s"Received message with command: 0x$cmd from channel: $channel")
     val clsName = s"com.example.commands.Command${cmd.take(2)}$$"
     val methodName = s"handler${cmd.drop(2)}"
 
     val cls = getObjectFromCache(clsName)
 
-    cls match {
-      case _: IPlayerCommand =>
-        val playerId = ctx.channel().attr(ATTR_PLAYER_ID).get()
-        invoke(clsName, methodName, Array(playerId, message), Array[Class[_]](classOf[String], classOf[Message]))
-      case _: ISystemCommand =>
-        invoke(clsName, methodName, Array(ctx, message), Array[Class[_]](classOf[ChannelHandlerContext], classOf[Message]))
-      case _ =>
-        println(s"Unknown command handler type for command: 0x$cmd")
+    try {
+      cls match {
+        case _: IPlayerCommand =>
+          val playerId = ctx.channel().attr(ATTR_PLAYER_ID).get()
+          invoke(clsName, methodName, playerId, message)
+        case _: ISystemCommand =>
+          invoke(clsName, methodName, ctx, message)
+        case _ =>
+          println(s"Unknown command handler type for command: 0x$cmd")
+      }
+    } catch {
+      case be: BusinessException =>
+        ctx.writeAndFlush(new Message(CmdType.INVALID, be.toMessageBody))
+      case e: Exception =>
     }
   }
 
-  private def invoke(clsName: String, methodName: String, args: Array[Object], clsSet: Array[Class[_]]): Any = {
-    val method = getMethodFromCache(clsName, methodName, clsSet: _*)
+  private def invoke(clsName: String, methodName: String, args: Object*): Any = {
+    val method = getMethodFromCache(clsName, methodName, args.map(parseClass): _*)
     val obj = getObjectFromCache(clsName)
     method.invoke(obj, args: _*)
+  }
+
+  private def parseClass(obj: Object): Class[_] = {
+    obj match {
+      case _: ChannelHandlerContext => classOf[ChannelHandlerContext]
+      case _ => obj.getClass
+    }
   }
 
   private def getObjectFromCache(className: String): Object = {

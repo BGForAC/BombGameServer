@@ -14,6 +14,7 @@ object MessageEncoder extends MessageToByteEncoder[AnyRef] {
         val buffer = message.toByteBuf
         out.writeInt(buffer.capacity())
         out.writeBytes(buffer)
+        println(s"Encoded message: $message Cmd=${message.getCommand.toHexString} Length=${buffer.capacity()}")
 //      case bytes: Array[Byte] =>
       case _ => throw new IllegalArgumentException("Unsupported message type")
     }

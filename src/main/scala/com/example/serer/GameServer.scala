@@ -1,15 +1,38 @@
 package com.example.serer
 
+import com.example.config.IConfig
+import com.example.holder.SceneHolder
+import com.example.utils.ClassUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.{ChannelHandler, ChannelInitializer}
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.handler.codec.http.{HttpObjectAggregator, HttpServerCodec}
 
 object GameServer {
   def run(): Unit = {
+    loadConfigs()
+    initHolder()
     clientSocket()
+  }
+
+  private def loadConfigs(): Unit = {
+    val classes = ClassUtil.getClassesInPackage("com.example.config")
+    classes.foreach { cls =>
+      try {
+        val obj = cls.getDeclaredField("MODULE$").get(null)
+        obj match {
+          case config: IConfig => config.loadConfigs()
+          case _ =>
+        }
+      } catch {
+        case _: Exception =>
+      }
+    }
+  }
+
+  private def initHolder(): Unit = {
+    SceneHolder.scan()
   }
 
   private def clientSocket(): Unit = {

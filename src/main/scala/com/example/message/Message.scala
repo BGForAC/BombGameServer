@@ -13,8 +13,12 @@ object Message {
     val command = byteBuf.readInt()
     val body = new Array[Byte](size)
     byteBuf.readBytes(body)
-    println(s"Received message - Command: $command, Body Size: $size bytes")
+//    println(s"Received message - Command: $command, Body Size: $size bytes")
     new Message(command, MessageBody.fromBytes(body))
+  }
+
+  def apply(cmdTyp: Int, body: MessageBody): Message = {
+    new Message(cmdTyp, body)
   }
 }
 
@@ -38,19 +42,23 @@ class Message(cmdTyp: Int,private var body: MessageBody) {
   }
 
   def getInt(key: String): Int = {
-    body.getOrElse(key, 0).asInstanceOf[Int]
+    body.getOrElse(key, "0").asInstanceOf[String].toFloat.toInt
   }
 
   def getLong(key: String): Long = {
-    body.getOrElse(key, 0L).asInstanceOf[Long]
+    body.getOrElse(key, "0").asInstanceOf[String].toFloat.toLong
+  }
+
+  def getFloat(key: String): Float = {
+    body.getOrElse(key, "0").asInstanceOf[String].toFloat
   }
 
   def getDouble(key: String): Double = {
-    body.getOrElse(key, 0.0).asInstanceOf[Double]
+    body.getOrElse(key, "0").asInstanceOf[String].toDouble
   }
 
   def getBoolean(key: String): Boolean = {
-    body.getOrElse(key, false).asInstanceOf[Boolean]
+    body.getOrElse(key, "false").asInstanceOf[String].toBoolean
   }
 
   def getBody: MessageBody = body

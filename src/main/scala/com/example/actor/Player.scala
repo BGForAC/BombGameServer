@@ -1,5 +1,7 @@
 package com.example.actor
 
-class Player(id: String) extends Moveable(id) {
-  def getId: String = id
+class Player(pid: String) extends Actor(pid) {
+  def baseInfo: Seq[(String, Any)] = {
+    movement.info ++ attr.info
+  }
 }

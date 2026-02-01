@@ -8,6 +8,10 @@ object PlayerHolder {
   private val players: mutable.Map[String, Player] = mutable.Map()
 
   def addPlayer(player: Player): Unit = {
-    players += (player.getId -> player)
+    players += (player.id -> player)
+  }
+
+  def getPlayer(playerId: String): Player = {
+    players.getOrElse(playerId, null)
   }
 }
