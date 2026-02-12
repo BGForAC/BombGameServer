@@ -8,7 +8,6 @@ import com.example.scene.Scene
 import com.example.serer.PlayerChannels
 
 class Movement(owner: Actor) {
-  private val SCALE: Int = 100
   private var x: Int = 0
   private var y: Int = 0
   private var z: Int = 0
@@ -64,10 +63,10 @@ class Movement(owner: Actor) {
 
   private def checkValidMove(pos: (Int, Int, Int, Int)): Unit = {
     val (newX, newY, newZ, _) = pos
-    val distance = Math.sqrt(Math.pow(newX - x, 2) + Math.pow(newY - y, 2) + Math.pow(newZ - z, 2)) / Math.pow(SCALE, 2)
+    val distance = Math.sqrt(Math.pow(newX - x, 2) + Math.pow(newY - y, 2) + Math.pow(newZ - z, 2))
     // 暂时不考虑网络延迟等因素
     val passTime = System.currentTimeMillis() - lastTime
-    val speed = owner.attr.currentSpeed / SCALE
+    val speed = owner.attr.getSpeed
     val maxDistance = speed * (passTime.toDouble / 1000.0)
     if (distance > maxDistance) {
       ThrowBusinessException("移动速度异常")

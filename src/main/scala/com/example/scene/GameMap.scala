@@ -3,7 +3,7 @@ package com.example.scene
 import scala.collection.mutable
 
 class GameMap(scene: Scene) {
-  val grids: mutable.ListBuffer[MapNode] = mutable.ListBuffer()
+  private val grids: mutable.ListBuffer[MapNode] = mutable.ListBuffer()
 
   init()
   private def init(): Unit = {
@@ -16,9 +16,8 @@ class GameMap(scene: Scene) {
         val x = parts(0).toInt
         val y = parts(1).toInt
         val z = parts(2).toInt
-        val angle = parts(3).toInt
-        val nodeType = parts(4).toInt
-        val node = new MapNode(x, y, z, angle)
+        val nodeType = parts(3).toInt
+        val node = new MapNode(x, y, z)
         node.nodeType(nodeType)
         grids += node
       }
@@ -34,18 +33,16 @@ class GameMap(scene: Scene) {
     var x: Int = 0
     var y: Int = 0
     var z: Int = 0
-    var angle: Int = 0
 
     var isWalkable: Boolean = true
     var isObstacle: Boolean = false
     var isWall: Boolean = false
 
-    def this(x: Int, y: Int, z: Int, angle: Int) = {
+    def this(x: Int, y: Int, z: Int) = {
       this()
       this.x = x
       this.y = y
       this.z = z
-      this.angle = angle
     }
 
     def nodeType(nodeType: Int): Unit = {
