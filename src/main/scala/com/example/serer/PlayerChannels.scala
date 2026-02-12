@@ -10,6 +10,10 @@ object PlayerChannels {
     channels += (playerId -> ctx)
   }
 
+  def removeChannel(playerId: String): Unit = {
+    channels -= playerId
+  }
+
   def send(playerId: String, msg: Message): Unit = {
     channels.get(playerId) match {
       case Some(ctx) => ctx.writeAndFlush(msg)

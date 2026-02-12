@@ -10,7 +10,7 @@ object ThrowBusinessException {
 }
 
 class BusinessException(message: String, exceptionType: Int = ExceptionType.DEFAULT) extends RuntimeException with NoStackTrace {
-  private val errMessage = MessageBody("msg" -> message)
+  private val errMessage = MessageBody("msg" -> message, "errType" -> exceptionType.toString)
 
   def toMessageBody: MessageBody = {
     errMessage

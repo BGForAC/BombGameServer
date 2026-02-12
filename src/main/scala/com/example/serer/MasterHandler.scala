@@ -2,6 +2,7 @@ package com.example.serer
 
 import com.example.commands.{CmdType, IPlayerCommand, ISystemCommand}
 import com.example.exception.BusinessException
+import com.example.holder.PlayerHolder
 import com.example.message.Message
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
@@ -16,12 +17,14 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
   private val clsCache = mutable.Map[String, Object]()
   private val methodCache = mutable.Map[(String, String), java.lang.reflect.Method]()
 
-  val logFilterCmds: Set[String] = Set(f"${CmdType.MOVE}%04X", f"${CmdType.HEARTBEAT}%04X")
+  private val logFilterCommands: Set[String] = Set(CmdType.MOVE, CmdType.HEARTBEAT).map(toHexString)
+
+  def toHexString(cmd: Int): String = f"$cmd%04X"
 
   override def channelRead0(ctx: ChannelHandlerContext, message: Message): Unit = {
-    val channel = ctx.channel()
-    val cmd = f"${message.getCommand}%04X"
-    if (!logFilterCmds.contains(cmd)) println(s"Received message with command: 0x$cmd from channel: $channel")
+    val cmd = toHexString(message.getCommand)
+//    val channel = ctx.channel()
+//    if (!logFilterCommands.contains(cmd)) println(s"Received message with command: 0x$cmd from channel: $channel")
     val clsName = s"com.example.commands.Command${cmd.take(2)}$$"
     val methodName = s"handler${cmd.drop(2)}"
 
@@ -35,12 +38,31 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
         case _: ISystemCommand =>
           invoke(clsName, methodName, ctx, message)
         case _ =>
-          println(s"Unknown command handler type for command: 0x$cmd")
+          throw new RuntimeException(s"Unknown command handler type for command: 0x$cmd")
       }
     } catch {
-      case be: BusinessException =>
-        ctx.writeAndFlush(new Message(CmdType.INVALID, be.toMessageBody))
+      case t: Throwable =>
+        t.getCause match {
+          case e: BusinessException =>
+            ctx.writeAndFlush(new Message(CmdType.INVALID, e.toMessageBody))
+          case other =>
+            other.printStackTrace()
+        }
       case e: Exception =>
+        e.printStackTrace()
+    }
+  }
+
+  override def channelInactive(ctx: ChannelHandlerContext): Unit = {
+    super.channelInactive(ctx)
+    val ch = ctx.channel()
+    val playerId = ch.attr(ATTR_PLAYER_ID).get()
+    if (playerId != null) {
+      val player = PlayerHolder.getPlayer(playerId)
+      if (player != null) {
+        println(s"Player ${player.id} has disconnected.")
+        player.onDisConnect()
+      }
     }
   }
 

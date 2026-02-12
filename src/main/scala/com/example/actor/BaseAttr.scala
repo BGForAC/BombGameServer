@@ -28,6 +28,10 @@ class BaseAttr(owner: Actor) {
       field.getName -> field.get(this)
     }
   }
+
+  def initAttr(typ: String, level: Int): BaseAttr = {
+    Thread.currentThread()
+  }
 }
 
 object BaseAttr {

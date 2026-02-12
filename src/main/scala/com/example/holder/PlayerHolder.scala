@@ -11,6 +11,10 @@ object PlayerHolder {
     players += (player.id -> player)
   }
 
+  def removePlayer(playerId: String): Unit = {
+    players -= playerId
+  }
+
   def getPlayer(playerId: String): Player = {
     players.getOrElse(playerId, null)
   }

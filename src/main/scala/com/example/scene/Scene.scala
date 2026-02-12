@@ -12,9 +12,11 @@ import com.example.serer.PlayerChannels
 import scala.collection.mutable
 
 abstract class Scene(sceneId: String, sceneDef: SceneDef) {
+  private val map = new GameMap(this)
+
   SceneHolder.addScene(this)
 
-  val actors: mutable.Map[String, Actor] = mutable.Map()
+  private val actors: mutable.Map[String, Actor] = mutable.Map()
 
   val players: mutable.Map[String, Player] = mutable.Map()
 
@@ -55,7 +57,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def onExit(actor: Actor): Unit = {
     actors -= actor.id
     players.values.foreach{ player =>
-      PlayerChannels.send(player.id, new Message(CmdType.EXIT_SCENE, MessageBody("pid" -> actor.id)))
+      PlayerChannels.send(player.id, new Message(CmdType.EXIT_SCENE, MessageBody("aid" -> actor.id)))
     }
     actor match {
       case player: Player =>
@@ -64,14 +66,21 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     }
     actor.setOutScene(this)
   }
+
+  def walkable(x: Int, y: Int, z: Int): Boolean = {
+    map.walkable(x, y, z)
+  }
 }
 
 trait SceneFacade extends ScanAble[Int] {
-  def checkEnterScene(actor: Actor): Boolean = {
-    throw new NotImplementedError("This method should be implemented by subclasses")
+  private var uniqueKey = 0
+
+  def genSceneId(_def: SceneDef): String = {
+    uniqueKey += 1
+    s"${_def.id}_$uniqueKey"
   }
 
-  def apply(_def: SceneDef): Scene = {
-    throw new NotImplementedError("This method should be implemented by subclasses")
-  }
+  def checkEnterScene(actor: Actor): Boolean
+
+  def apply(_def: SceneDef): Scene
 }

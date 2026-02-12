@@ -10,5 +10,7 @@ object CmdType {
 
   val MOVE = 0x0301
 
-  val ENTER_BASE_GAME = 0x0401
+  val BASE_GAME_MATCH = 0x0401
+  val BASE_GAME_CANCEL_MATCH = 0x0402
+  val ENTER_BASE_GAME = 0x0403
 }

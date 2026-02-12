@@ -7,8 +7,11 @@ import com.example.serer.PlayerChannels
 
 object Command02 extends IPlayerCommand {
   def handler01(playerId: String, message: Message): Unit = {
-    val sceneId = message.getInt("sceneId")
+    val sceneId = message.getString("sceneId")
     val player = PlayerHolder.getPlayer(playerId)
+    if (player == null) {
+      ThrowBusinessException(s"玩家未登录")
+    }
     if (!SceneHolder.checkEnterScene(sceneId, player)) {
       ThrowBusinessException(s"你不能进入该场景")
     }

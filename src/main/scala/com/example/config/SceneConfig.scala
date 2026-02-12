@@ -35,4 +35,5 @@ class SceneDef {
   var name: String = _
   var spawnPoints: Array[(Int, Int, Int, Int)] = _
   var maxPlayerCnt: Int = _
+  var mapId: String = _
 }
