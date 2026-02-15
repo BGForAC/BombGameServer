@@ -11,6 +11,7 @@ object SceneConfig extends IConfig {
     sceneDef.typ = SceneType.BASE_GAME
     sceneDef.name = s"基础游戏场景"
     sceneDef.maxPlayerCnt = 4
+    sceneDef.mapId = "map_01"
     sceneDef.spawnPoints = Array(
       (-1250, 40, -1250, 45),
       (1250, 40, -1250, 135),

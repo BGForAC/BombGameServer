@@ -1,10 +1,7 @@
 package com.example.scene
 
 import com.example.actor.{Actor, Player}
-import com.example.commands.CmdType
 import com.example.config.SceneDef
-import com.example.message.{Message, MessageBody}
-import com.example.serer.PlayerChannels
 
 import scala.collection.mutable
 
@@ -21,8 +18,7 @@ class BaseGameScene(id: String, _def: SceneDef) extends Scene(id, _def) {
       case player: Player =>
         player2Idx += player.id -> idx
         super.onEnter(player)
-        PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody((Seq("index" -> idx) ++ player.baseInfo): _*)))
-        player.movement.setPosition(getSpawnPoint(player.id))
+        player.movement.setPosition(getSpawnPoint(player.id), checkMove = false)
         idx = idx + 1
       case _ =>
     }

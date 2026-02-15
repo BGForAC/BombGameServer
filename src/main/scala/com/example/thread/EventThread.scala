@@ -10,7 +10,19 @@ object EventThread extends Runnable {
     while (true) {
       val startTime = System.currentTimeMillis()
 
-      TickManager.tick()
+      try {
+        TickManager.tick()
+      } catch {
+        case t: Throwable =>
+          t.getCause match {
+            case e: Exception =>
+              println(s"Tick error: ${e.getMessage}")
+            case _ =>
+              println(s"Unexpected error: ${t.getMessage}")
+          }
+        case e: Exception =>
+          println(s"Tick error: ${e.getMessage}")
+      }
 
       val elapsedTime = System.currentTimeMillis() - startTime
       val sleepTime = frameDelay - elapsedTime

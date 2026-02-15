@@ -33,19 +33,19 @@ class BaseAttr(owner: Actor) {
 
   def getSpeed: Double = speed * speedMultiplier * 100
 
-  def info: Seq[(String, Any)] = {
-    this.getClass.getDeclaredFields.filterNot(_.isSynthetic).flatMap { field =>
-      try {
-        field.setAccessible(true)
-        Option(field.getName -> field.get(this))
-      } catch {
-        case _: Throwable =>
-          None
-      }
-    }
-  }
-
-  def initAttr(typ: String, level: Int): BaseAttr = {
+//  def info: Seq[(String, Any)] = {
+//    this.getClass.getDeclaredFields.filterNot(_.isSynthetic).flatMap { field =>
+//      try {
+//        field.setAccessible(true)
+//        Option(field.getName -> field.get(this))
+//      } catch {
+//        case _: Throwable =>
+//          None
+//      }
+//    }
+//  }
+//
+  def initAttr(typ: String): BaseAttr = {
     val filePath = s"attr/$typ.attr"
     Thread.currentThread().getContextClassLoader.getResourceAsStream(filePath) match {
       case null =>

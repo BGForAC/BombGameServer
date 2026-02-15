@@ -12,7 +12,7 @@ import com.example.serer.PlayerChannels
 import scala.collection.mutable
 
 abstract class Scene(sceneId: String, sceneDef: SceneDef) {
-  private val map = new GameMap(this)
+//  private val map = new GameMap(this)
 
   SceneHolder.addScene(this)
 
@@ -68,7 +68,8 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   }
 
   def walkable(x: Int, y: Int, z: Int): Boolean = {
-    map.walkable(x, y, z)
+    true
+//    map.walkable(x, y, z)
   }
 }
 

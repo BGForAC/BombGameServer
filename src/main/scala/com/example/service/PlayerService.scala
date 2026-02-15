@@ -12,9 +12,9 @@ object PlayerService {
   def getPlayer(username: String, password: String): Player = {
     val player = new Player(generatePlayerId())
     player.uname = username
-    if (playerMap.values.exists(p => p.uname == username)) {
-      ThrowBusinessException("用户名已存在")
-    }
+//    if (playerMap.values.exists(p => p.uname == username)) {
+//      ThrowBusinessException("用户名已存在")
+//    }
     if (playerMap.keySet.contains(player.id)) {
       ThrowBusinessException("玩家ID已存在")
     }

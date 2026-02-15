@@ -67,6 +67,9 @@ class Message(cmdTyp: Int,private var body: MessageBody) {
 object MessageBody {
   def fromBytes(bytes: Array[Byte]): MessageBody = {
     val formatString = new String(bytes, StandardCharsets.UTF_8)
+    if (formatString.isEmpty) {
+      return new MessageBody
+    }
     formatString.split(";").map(kv => {
       val pair = kv.split("=", 2)
       (pair(0), pair(1))

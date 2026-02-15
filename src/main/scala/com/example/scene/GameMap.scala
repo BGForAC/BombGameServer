@@ -8,7 +8,7 @@ class GameMap(scene: Scene) {
   init()
   private def init(): Unit = {
     val mapId = scene._def.mapId
-    val fileName = s"maps/map_$mapId.txt"
+    val fileName = s"maps/$mapId.txt"
     val source = scala.io.Source.fromFile(fileName)
     for (line <- source.getLines()) {
       val parts = line.split(",")

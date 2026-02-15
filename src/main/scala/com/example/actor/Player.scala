@@ -1,10 +1,15 @@
 package com.example.actor
 
 import com.example.holder.{PlayerHolder, SceneHolder}
+import com.example.scene.Scene
 import com.example.serer.PlayerChannels
 
 class Player(pid: String) extends Actor(pid) {
   var uname: String = _
+
+  var career: String = _
+
+  var controlConfig: Int = _
 
   private var offLine: Boolean = false
 
@@ -21,6 +26,13 @@ class Player(pid: String) extends Actor(pid) {
   }
 
   def baseInfo: Seq[(String, Any)] = {
-    movement.info ++ attr.info
+//    movement.info ++ attr.info
+    movement.info ++ Seq(("id", id), ("uname", uname), ("career", career), ("controlConfig", controlConfig))
+  }
+
+  override def setOutScene(scene: Scene): Unit = {
+    super.setOutScene(scene)
+    career = null
+    controlConfig = 0
   }
 }

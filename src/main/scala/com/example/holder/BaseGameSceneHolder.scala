@@ -1,6 +1,9 @@
 package com.example.holder
 
+import com.example.commands.CmdType
 import com.example.exception.ThrowBusinessException
+import com.example.message.{Message, MessageBody}
+import com.example.serer.PlayerChannels
 
 import scala.collection.mutable
 import scala.util.Random
@@ -10,10 +13,10 @@ object BaseGameSceneHolder {
   // value: MatchQueue
   private val matchQueues: mutable.Map[Int, MatchQueue] = mutable.Map.empty
 
-  private val minRoomSize = 2
+  private val minRoomSize = 1
   private val maxRoomSize = 4
   private val tickInterval = 50
-  private val mapCnt = 3
+  private val mapCnt = 1
   private val baseSceneId = 1
 
   // 暂时不考虑玩家加入多个地图匹配队列的情况
@@ -66,11 +69,14 @@ object BaseGameSceneHolder {
           } else {
             matchQueue.remove(0, roomSize)
             val actualMapId = if (mapId == 0) {
-              Random.nextInt(mapCnt) + 1
+              Random.nextInt(mapCnt) + baseSceneId
             } else mapId
-            val scene = SceneHolder.createScene(baseSceneId + actualMapId - 1)
-            for (player <- players.map(_._2)) {
+            val scene = SceneHolder.createScene(actualMapId)
+            players.foreach { case (_, player) =>
               SceneHolder.enterScene(scene.id, player)
+              val otherPlayerInfo: String = players.filter(_._1 != player.id).map(_._2.baseInfo.map{ case (k, v) => s"$k:$v"
+              }.mkString(",")).mkString("|")
+              PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody((Seq("mapId" -> actualMapId, "otherPlayers" -> otherPlayerInfo) ++ player.baseInfo): _*)))
             }
 
             println(s"匹配成功，玩家[${players.mkString(",")}]进入场景")
