@@ -24,8 +24,12 @@ class BaseGameScene(id: String, _def: SceneDef) extends Scene(id, _def) {
     }
   }
 
-  private def getSpawnPoint(playerId: String): (Int, Int, Int, Int) = {
+  private def getSpawnPoint(playerId: String): (Int, Int, Int, Float) = {
     _def.spawnPoints(player2Idx(playerId))
+  }
+
+  def playerIdxInfo: mutable.Map[String, Int] = {
+    player2Idx
   }
 }
 

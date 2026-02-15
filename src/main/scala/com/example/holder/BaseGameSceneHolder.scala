@@ -3,6 +3,7 @@ package com.example.holder
 import com.example.commands.CmdType
 import com.example.exception.ThrowBusinessException
 import com.example.message.{Message, MessageBody}
+import com.example.scene.BaseGameScene
 import com.example.serer.PlayerChannels
 
 import scala.collection.mutable
@@ -74,9 +75,26 @@ object BaseGameSceneHolder {
             val scene = SceneHolder.createScene(actualMapId)
             players.foreach { case (_, player) =>
               SceneHolder.enterScene(scene.id, player)
-              val otherPlayerInfo: String = players.filter(_._1 != player.id).map(_._2.baseInfo.map{ case (k, v) => s"$k:$v"
-              }.mkString(",")).mkString("|")
-              PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody((Seq("mapId" -> actualMapId, "otherPlayers" -> otherPlayerInfo) ++ player.baseInfo): _*)))
+            }
+
+            val playerIdxInfo = scene.asInstanceOf[BaseGameScene].playerIdxInfo
+
+            if (playerIdxInfo.size != players.size) {
+              println(s"玩家索引信息数量[${playerIdxInfo.size}]与玩家数量[${players.size}]不匹配")
+              players.foreach { case (playerId, _) =>
+                PlayerChannels.sendError(playerId, "匹配失败，有玩家没有成功进入场景")
+              }
+              return
+            }
+
+            val playersInfo = playerIdxInfo.toSeq.sortBy(_._2).map{ case (playerId, idx) =>
+              val player = PlayerHolder.getPlayer(playerId)
+              player.baseInfo.map{case (k, v) => s"$k:$v"}.mkString(",")
+            }.mkString("|")
+            players.foreach { case (_, player) =>
+              PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(
+                Seq("mapId" -> actualMapId, "playersInfo" -> playersInfo): _*))
+              )
             }
 
             println(s"匹配成功，玩家[${players.mkString(",")}]进入场景")

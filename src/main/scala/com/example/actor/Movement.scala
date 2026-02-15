@@ -11,7 +11,7 @@ class Movement(owner: Actor) {
   private var x: Int = 0
   private var y: Int = 0
   private var z: Int = 0
-  private var angle: Int = 0
+  private var angle: Float = 0
 
   private var lastX: Int = 0
   private var lastY: Int = 0
@@ -42,7 +42,7 @@ class Movement(owner: Actor) {
   def tick(tickIndex: Long): Unit = {
   }
 
-  def setPosition(pos: (Int, Int, Int, Int), checkMove: Boolean = true): Unit = {
+  def setPosition(pos: (Int, Int, Int, Float), checkMove: Boolean = true): Unit = {
     if (sceneId == null) {
       return
     }

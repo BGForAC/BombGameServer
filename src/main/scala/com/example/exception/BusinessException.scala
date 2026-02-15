@@ -1,6 +1,7 @@
 package com.example.exception
 
-import com.example.message.{Message, MessageBody}
+import com.example.message.{ErrorMessage, Message}
+
 import scala.util.control.NoStackTrace
 
 object ThrowBusinessException {
@@ -10,9 +11,7 @@ object ThrowBusinessException {
 }
 
 class BusinessException(message: String, exceptionType: Int = ExceptionType.DEFAULT) extends RuntimeException with NoStackTrace {
-  private val errMessage = MessageBody("msg" -> message, "errType" -> exceptionType.toString)
-
-  def toMessageBody: MessageBody = {
-    errMessage
+  def toMessage: Message = {
+    ErrorMessage(message, exceptionType)
   }
 }

@@ -13,10 +13,10 @@ object SceneConfig extends IConfig {
     sceneDef.maxPlayerCnt = 4
     sceneDef.mapId = "map_01"
     sceneDef.spawnPoints = Array(
-      (-1250, 40, -1250, 45),
-      (1250, 40, -1250, 135),
-      (1250, 40, 1250, 225),
-      (-1250, 40, 1250, 315)
+      (-1250, 40, -1250, 45f),
+      (1250, 40, -1250, 135f),
+      (1250, 40, 1250, 225f),
+      (-1250, 40, 1250, 315f)
     )
     sceneDefs += (1 -> sceneDef)
   }
@@ -34,7 +34,7 @@ class SceneDef {
   var id: Int = _
   var typ: Int = _
   var name: String = _
-  var spawnPoints: Array[(Int, Int, Int, Int)] = _
+  var spawnPoints: Array[(Int, Int, Int, Float)] = _
   var maxPlayerCnt: Int = _
   var mapId: String = _
 }

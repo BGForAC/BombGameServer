@@ -1,9 +1,17 @@
 package com.example.message
 
+import com.example.commands.CmdType
+import com.example.exception.ExceptionType
 import io.netty.buffer.{ByteBuf, Unpooled}
 
 import java.nio.charset.StandardCharsets
 import scala.collection.mutable
+
+object ErrorMessage {
+  def apply(message: String, exceptionType: Int = ExceptionType.DEFAULT): Message = {
+    Message(CmdType.INVALID, MessageBody("msg" -> message, "errType" -> exceptionType))
+  }
+}
 
 object Message {
   val MAX_LENGTH: Int = 1024 * 1024

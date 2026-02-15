@@ -7,7 +7,7 @@ object Command03 extends IPlayerCommand {
     val x = message.getInt("x")
     val y = message.getInt("y")
     val z = message.getInt("z")
-    val angle = message.getInt("angle")
+    val angle = message.getFloat("angle")
     val player = PlayerHolder.getPlayer(playerId)
     player.movement.setPosition((x, y, z, angle))
   }

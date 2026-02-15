@@ -44,7 +44,7 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
       case t: Throwable =>
         t.getCause match {
           case e: BusinessException =>
-            ctx.writeAndFlush(new Message(CmdType.INVALID, e.toMessageBody))
+            ctx.writeAndFlush(e.toMessage)
           case other =>
             other.printStackTrace()
         }

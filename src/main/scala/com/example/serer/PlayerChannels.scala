@@ -1,6 +1,7 @@
 package com.example.serer
 
-import com.example.message.Message
+import com.example.exception.ExceptionType
+import com.example.message.{ErrorMessage, Message}
 import io.netty.channel.ChannelHandlerContext
 
 object PlayerChannels {
@@ -19,6 +20,10 @@ object PlayerChannels {
       case Some(ctx) => ctx.writeAndFlush(msg)
       case None => println(s"Channel for player $playerId not found.")
     }
+  }
+
+  def sendError(playerId: String, msg: String, errTyp: Int = ExceptionType.DEFAULT): Unit = {
+    send(playerId, ErrorMessage(msg, errTyp))
   }
 
 }
