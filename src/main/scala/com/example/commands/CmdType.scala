@@ -13,4 +13,8 @@ object CmdType {
   val BASE_GAME_MATCH = 0x0401
   val BASE_GAME_CANCEL_MATCH = 0x0402
   val ENTER_BASE_GAME = 0x0403
+
+  val PUT_BOMB = 0x0501
+
+  val HP_CHANGE = 0x0601
 }

@@ -53,13 +53,8 @@ object SceneHolder extends Scanner[Int, SceneFacade] {
   }
 
   def enterScene(sceneId: String, actor: Actor): Unit = {
-    if (actor == null) {
-      println(s"对象不存在")
-      return
-    }
-    if (!scenes.keys.exists(sceneId == _)) {
-      ThrowBusinessException(s"场景[$sceneId]不存在")
-    }
+    if (actor == null) throw new IllegalArgumentException("actor不能为空")
+    if (!scenes.keys.exists(sceneId == _)) ThrowBusinessException(s"场景[$sceneId]不存在")
 
     val lastScene = scenes.getOrElse(actor.movement.lastSceneId, null)
     if (lastScene != null) {
@@ -70,5 +65,13 @@ object SceneHolder extends Scanner[Int, SceneFacade] {
 
     val scene = scenes(sceneId)
     scene.onEnter(actor)
+  }
+
+  def exitScene(sceneId: String, actor: Actor): Unit = {
+    if (actor == null) throw new IllegalArgumentException("actor不能为空")
+    if (!scenes.keys.exists(sceneId == _)) ThrowBusinessException(s"场景[$sceneId]不存在")
+
+    val scene = scenes(sceneId)
+    scene.onExit(actor)
   }
 }

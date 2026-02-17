@@ -21,6 +21,11 @@ class Movement(owner: Actor) {
   var lastSceneId: String = _
   private var lastTime: Long = _
 
+  def inRange(movement: Movement, range: Float): Boolean = {
+    val distance = Math.sqrt(Math.pow(x - movement.x, 2) + Math.pow(y - movement.y, 2) + Math.pow(z - movement.z, 2))
+    distance <= range
+  }
+
   def setToScene(scene: Scene): Unit = {
     sceneId = scene.id
   }
@@ -76,7 +81,7 @@ class Movement(owner: Actor) {
     val distance = Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(z - lastZ, 2))
     // 暂时不考虑网络延迟等因素，直接按照20ms的tick来算，如果玩家的移动超过了这个速度，就认为是异常移动
     val passTime = System.currentTimeMillis() - lastTime + 20
-    val speed = owner.attr.getSpeed
+    val speed = owner.attr.Speed
     val maxDistance = speed * (passTime.toDouble / 1000.0)
     lastTime = System.currentTimeMillis()
     if (distance > maxDistance) {

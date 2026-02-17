@@ -8,30 +8,37 @@ class BaseAttr(owner: Actor) {
   var exp: Int = 0
   var maxExpToLevelUp: Int = 100
 
+  var hp: Int = _
   var maxHp: Int = _
   var speed: Int = _
   var maxLevel: Int = _
   var maxStamina: Int = _
   var staminaDrainRate: Int = _
   var staminaRegenRate: Int = _
-  var speedMultiplier: Double = _
+  var speedMultiplier: Float = _
   var maxBombCount: Int = _
   var bombDamage: Int = _
-  var bombRadius: Int = _
-  var bombFuseTime: Int = _
-  var bombCooldown: Double = _
-  var bombRecoveryTime: Int = _
-  var speedGrowth: Double = _
+  var bombRadius: Float = _
+  var bombFuseTime: Float = _
+  var bombCooldown: Float = _
+  var bombRecoveryTime: Float = _
+  var speedGrowth: Float = _
   var staminaGrowth: Int = _
   var bombDamageGrowth: Int = _
   var bombRadiusGrowth: Int = _
-  var bombFuseTimeGrowth: Double = _
-  var bombCooldownGrowth: Double = _
-  var bombRecoveryTimeGrowth: Double = _
+  var bombFuseTimeGrowth: Float = _
+  var bombCooldownGrowth: Float = _
+  var bombRecoveryTimeGrowth: Float = _
   var maxBombCountGrowth: Int = _
   var maxHpGrowth: Int = _
 
-  def getSpeed: Double = speed * speedMultiplier * 100
+  def Speed: Float = speed * speedMultiplier * 100
+  def FuseTime: Int = (bombFuseTime * 1000).toInt
+  def BombRecoveryTime: Int = (bombRecoveryTime * 1000).toInt
+  def Cooldown: Int = (bombCooldown * 1000).toInt
+  def BombDamage: Int = bombDamage
+  def BombRadius: Float = bombRadius
+  def MaxBombCount: Int = maxBombCount
 
 //  def info: Seq[(String, Any)] = {
 //    this.getClass.getDeclaredFields.filterNot(_.isSynthetic).flatMap { field =>
@@ -60,14 +67,15 @@ class BaseAttr(owner: Actor) {
           field.setAccessible(true)
           field.getType match {
             case t if t == classOf[Int] => field.set(this, value.toInt)
-            case t if t == classOf[Double] => field.set(this, value.toDouble)
             case t if t == classOf[Float] => field.set(this, value.toFloat)
+            case t if t == classOf[Double] => field.set(this, value.toDouble)
             case t if t == classOf[Long] => field.set(this, value.toLong)
             case t if t == classOf[Boolean] => field.set(this, value.toBoolean)
             case _ =>
               println(s"不支持的属性类型：${field.getType}，属性名：$name")
           }
         }
+        hp = maxHp
         this
     }
   }
