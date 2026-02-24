@@ -89,7 +89,7 @@ object BaseGameSceneHolder {
 
             val playersInfo = playerIdxInfo.toSeq.sortBy(_._2).map{ case (playerId, idx) =>
               val player = PlayerHolder.getPlayer(playerId)
-              player.baseInfo.map{case (k, v) => s"$k:$v"}.mkString(",")
+              player.baseInfoStr()
             }.mkString("|")
             players.foreach { case (_, player) =>
               PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(

@@ -1,6 +1,6 @@
 package com.example.tick
 
-import com.example.holder.{BaseGameSceneHolder, SceneHolder}
+import com.example.holder.{BaseGameRoomHolder, BaseGameSceneHolder, SceneHolder}
 
 object TickManager {
   private var currentTick: Long = 0
@@ -9,5 +9,6 @@ object TickManager {
     currentTick += 1
     SceneHolder.tick(currentTick)
     BaseGameSceneHolder.tick(currentTick)
+    BaseGameRoomHolder.tick(currentTick)
   }
 }

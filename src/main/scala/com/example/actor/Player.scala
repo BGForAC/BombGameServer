@@ -48,6 +48,10 @@ class Player(pid: String) extends Actor(pid) {
     movement.info ++ Seq(("id", id), ("uname", uname), ("career", career), ("controlConfig", controlConfig))
   }
 
+  def baseInfoStr(extraInfo: Seq[(String, Any)] = Seq.empty): String = {
+    (extraInfo ++ baseInfo).map{case (k, v) => s"$k:$v"}.mkString(",")
+  }
+
   override def setOutScene(scene: Scene): Unit = {
     super.setOutScene(scene)
     career = null

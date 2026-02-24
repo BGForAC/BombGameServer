@@ -90,6 +90,7 @@ class Movement(owner: Actor) {
   }
 
   def info: Seq[(String, Any)] = {
+    if (sceneId == null) return Seq.empty
     Seq("x" -> x, "y" -> y, "z" -> z, "angle" -> angle)
   }
 }

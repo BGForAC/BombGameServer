@@ -1,5 +1,6 @@
 package com.example.thread
 
+import com.example.exception.BusinessException
 import com.example.tick.TickManager
 
 object EventThread extends Runnable {
@@ -15,6 +16,8 @@ object EventThread extends Runnable {
       } catch {
         case t: Throwable =>
           t.getCause match {
+            case e: BusinessException =>
+              println(s"business exception, ignore (${e.getMessage})")
             case e: Exception =>
               println(s"Tick error: ${e.getMessage}")
             case _ =>

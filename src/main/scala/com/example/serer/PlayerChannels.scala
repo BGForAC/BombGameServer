@@ -1,7 +1,8 @@
 package com.example.serer
 
+import com.example.commands.CmdType
 import com.example.exception.ExceptionType
-import com.example.message.{ErrorMessage, Message}
+import com.example.message.{ErrorMessage, Message, MessageBody}
 import io.netty.channel.ChannelHandlerContext
 
 object PlayerChannels {
@@ -26,4 +27,11 @@ object PlayerChannels {
     send(playerId, ErrorMessage(msg, errTyp))
   }
 
+  def sendToAll(msg: Message): Unit = {
+    channels.keys.foreach(send(_, msg))
+  }
+
+  def alert(playerId: String, msg: String): Unit = {
+    send(playerId, Message(CmdType.ALERT, MessageBody("msg" -> msg)))
+  }
 }

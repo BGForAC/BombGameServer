@@ -18,4 +18,8 @@ object PlayerHolder {
   def getPlayer(playerId: String): Player = {
     players.getOrElse(playerId, null)
   }
+
+  def isOnline(playerId: String): Boolean = {
+    players.keySet.contains(playerId)
+  }
 }
