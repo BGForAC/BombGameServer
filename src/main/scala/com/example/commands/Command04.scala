@@ -35,8 +35,7 @@ object Command04 extends IPlayerCommand {
   }
 
   def handler06(playerId: String, message: Message): Unit = {
-    val roomId: Int = message.getInt("roomId")
-    BaseGameRoomHolder.leaveRoom(playerId, roomId)
+    BaseGameRoomHolder.leaveRoom(playerId)
   }
 
   def handler08(playerId: String, message: Message): Unit = {
@@ -44,24 +43,28 @@ object Command04 extends IPlayerCommand {
   }
 
   def handler09(playerId: String, message: Message): Unit = {
-    val roomId: Int = message.getInt("roomId")
     val targetId: String = message.getString("targetId")
-    BaseGameRoomHolder.kickPlayer(roomId, targetId, playerId)
+    BaseGameRoomHolder.kickPlayer(targetId, playerId)
     PlayerChannels.alert(playerId, "玩家踢除成功")
     PlayerChannels.alert(targetId, "你被房主踢出房间")
   }
 
   def handler0A(playerId: String, message: Message): Unit = {
-    val roomId: Int = message.getInt("roomId")
-    if (!BaseGameRoomHolder.isRoomLeader(playerId, roomId)) ThrowBusinessException("只有队长才能解散队伍")
-    BaseGameRoomHolder.removeRoom(roomId)
+    BaseGameRoomHolder.reqRemoveRoom(playerId)
   }
 
   def handler0B(playerId: String, message: Message): Unit = {
-    val roomId: Int = message.getInt("roomId")
-    if (!BaseGameRoomHolder.isRoomLeader(playerId, roomId)) ThrowBusinessException("只有队长才能转移")
-    val targetId: String = message.getString("leaderId")
-    BaseGameRoomHolder.changeLeader(roomId, targetId)
+    val targetId: String = message.getString("targetId")
+    BaseGameRoomHolder.changeLeader(playerId, targetId)
     PlayerChannels.alert(playerId, "转让成功")
+  }
+
+  def handler0C(playerId: String, messgae: Message): Unit = {
+    BaseGameRoomHolder.ready(playerId)
+  }
+
+  def handler0D(playerId: String, message: Message): Unit = {
+    val career: String = message.getString("career")
+    BaseGameRoomHolder.changeCareer(playerId, career)
   }
 }

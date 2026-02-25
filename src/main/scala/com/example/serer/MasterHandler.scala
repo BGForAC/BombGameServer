@@ -17,7 +17,7 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
   private val clsCache = mutable.Map[String, Object]()
   private val methodCache = mutable.Map[(String, String), java.lang.reflect.Method]()
 
-  private val logFilterCommands: Set[String] = Set(CmdType.MOVE, CmdType.HEARTBEAT).map(toHexString)
+//  private val logFilterCommands: Set[String] = Set(CmdType.MOVE, CmdType.HEARTBEAT).map(toHexString)
 
   def toHexString(cmd: Int): String = f"$cmd%04X"
 

@@ -20,8 +20,8 @@ object EventThread extends Runnable {
               println(s"business exception, ignore (${e.getMessage})")
             case e: Exception =>
               println(s"Tick error: ${e.getMessage}")
-            case _ =>
-              println(s"Unexpected error: ${t.getMessage}")
+            case e: MatchError =>
+              e.printStackTrace()
           }
         case e: Exception =>
           println(s"Tick error: ${e.getMessage}")
