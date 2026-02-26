@@ -67,4 +67,6 @@ object Command04 extends IPlayerCommand {
     val career: String = message.getString("career")
     BaseGameRoomHolder.changeCareer(playerId, career)
   }
+
+
 }

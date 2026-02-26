@@ -6,16 +6,32 @@ import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
 
+/**
+ * Sharable注解表示该处理器可以被多个Channel安全地共享
+ * 这是一个自定义的消息编码器，将消息转换为字节流
+ */
 @Sharable
 object MessageEncoder extends MessageToByteEncoder[AnyRef] {
+  /**
+   * 将消息编码为字节流并写入ByteBuf
+   * @param ctx ChannelHandlerContext，包含Channel通道的相关信息
+   * @param msg 需要编码的消息对象
+   * @param out 输出的ByteBuf，用于写入编码后的数据
+   */
   override protected def encode(ctx: ChannelHandlerContext, msg: AnyRef, out: ByteBuf): Unit = {
+    // 使用模式匹配处理不同类型的消息
     msg match {
       case message: Message =>
+        // 将消息转换为ByteBuf
         val buffer = message.toByteBuf
+        // 先写入消息长度，再写入消息内容
         out.writeInt(buffer.capacity())
         out.writeBytes(buffer)
+        // 以下是调试输出代码，已被注释
 //        println(s"Encoded message: $message Cmd=${message.getCommand.toHexString} Length=${buffer.capacity()}")
+      // 以下是字节数组处理的代码，已被注释
 //      case bytes: Array[Byte] =>
+      // 其他不支持的类型抛出异常
       case _ => throw new IllegalArgumentException("Unsupported message type")
     }
   }
