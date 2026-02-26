@@ -1,8 +1,7 @@
 package com.example.commands
 
-import com.example.exception.ThrowBusinessException
 import com.example.holder.{BaseGameRoomHolder, BaseGameSceneHolder, PlayerHolder}
-import com.example.message.{Message, MessageBody}
+import com.example.message.Message
 import com.example.serer.PlayerChannels
 
 object Command04 extends IPlayerCommand {
@@ -47,6 +46,7 @@ object Command04 extends IPlayerCommand {
     BaseGameRoomHolder.kickPlayer(targetId, playerId)
     PlayerChannels.alert(playerId, "玩家踢除成功")
     PlayerChannels.alert(targetId, "你被房主踢出房间")
+
   }
 
   def handler0A(playerId: String, message: Message): Unit = {

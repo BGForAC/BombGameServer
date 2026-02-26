@@ -5,6 +5,7 @@ object CmdType {
   val HEARTBEAT = 0x0102
   val INVALID = 0x01FF
   val ALERT = 0x01FE
+  val INFO = 0x01FD
 
   val ENTER_SCENE = 0x0201
   val EXIT_SCENE = 0x0202
