@@ -164,13 +164,61 @@ object MessageBody {
     if (formatString.isEmpty) {
       return new MessageBody
     }
-    formatString.split(";").map(kv => {
-      val pair = kv.split("=", 2)
-      (pair(0), pair(1))
-    }).foldLeft(new MessageBody) { (mb, kv) =>
-      mb.put(kv._1, kv._2)
-      mb
+    fromJson(formatString)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val jsonString = """{"key1":"value1","key2":{"subKey1":"subValue1","subKey2":"subValue2"},"key3":"value3"}"""
+    val messageBody = fromJson(jsonString)
+    println(messageBody)
+    println(messageBody.toJsonString)
+  }
+
+  // 数据是json类型的字符串，只有字符串或json类型的value
+  private def fromJson(jsonString: String): MessageBody = {
+    if (!jsonString.startsWith("{") || !jsonString.endsWith("}")) {
+      throw new RuntimeException(s"无效的消息体格式：$jsonString")
     }
+    val mb = new MessageBody
+    var content = jsonString.substring(1, jsonString.length - 1).trim
+    if (content.isEmpty) {
+      return mb
+    }
+    def findMatchBraceIndex(startIndex: Int, content: String): Int = {
+      var count = 0
+      for (i <- startIndex until content.length) {
+        if (content.charAt(i) == '{') count += 1
+        else if (content.charAt(i) == '}') count -= 1
+        if (count == 0) return i
+      }
+      -1
+    }
+    while (content.nonEmpty) {
+      val keyEndIndex = content.indexOf(":")
+      if (keyEndIndex == -1) {
+        throw new RuntimeException(s"无效的消息体格式：$jsonString")
+      }
+      val key = content.substring(0, keyEndIndex).trim.replaceAll("\"", "")
+      content = content.substring(keyEndIndex + 1).trim
+      if (content.startsWith("{")) {
+        val valueEndIndex = findMatchBraceIndex(0, content)
+        if (valueEndIndex == -1) {
+          throw new RuntimeException(s"无效的消息体格式：$jsonString, 无法找到匹配的右括号, content: $content")
+        }
+        val value = content.substring(0, valueEndIndex + 1)
+        mb.put(key, fromJson(value))
+        content = content.substring(valueEndIndex + 2).trim
+      } else {
+        val valueEndIndex = content.indexOf(",") match {
+          case -1 => content.length
+          case idx => idx
+        }
+        val value = content.substring(0, valueEndIndex).trim.replaceAll("\"", "")
+        mb.put(key, value)
+        content = if (valueEndIndex == content.length) "" else content.substring(valueEndIndex + 1).trim
+      }
+    }
+    mb
   }
 
   /**
@@ -192,10 +240,28 @@ object MessageBody {
 class MessageBody extends mutable.HashMap[String, Any] {
   /**
    * 将消息体转换为字节数组
+   * 现在改为转为json类型的string
    * @return 包含消息体数据的字节数组
    */
   def toBytes: Array[Byte] = {
-    val formatString = this.map { case (k, v) => s"$k=$v" }.mkString(";")
+    val formatString = this.toJsonString
     formatString.getBytes(StandardCharsets.UTF_8)
+  }
+
+  private def toJsonString: String = {
+    val ret = new StringBuilder("{")
+    this.foreach { case (k, v) =>
+      v match {
+        case body: MessageBody =>
+          ret.append(s""""$k":${body.toJsonString}""")
+        case _ =>
+          ret.append(s""""$k":"${v.toString}"""")
+      }
+      ret.append(",")
+    }
+    if (this.nonEmpty) {
+      ret.deleteCharAt(ret.length - 1) // 删除最后一个逗号
+    }
+    ret.append("}").toString()
   }
 }
