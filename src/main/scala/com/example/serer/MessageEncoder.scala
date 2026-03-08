@@ -27,10 +27,6 @@ object MessageEncoder extends MessageToByteEncoder[AnyRef] {
         // 先写入消息长度，再写入消息内容
         out.writeInt(buffer.capacity())
         out.writeBytes(buffer)
-        // 以下是调试输出代码，已被注释
-//        println(s"Encoded message: $message Cmd=${message.getCommand.toHexString} Length=${buffer.capacity()}")
-      // 以下是字节数组处理的代码，已被注释
-//      case bytes: Array[Byte] =>
       // 其他不支持的类型抛出异常
       case _ => throw new IllegalArgumentException("Unsupported message type")
     }

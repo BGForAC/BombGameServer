@@ -41,7 +41,7 @@ object CmdType {
   val BASE_GAME_READY = 0x040C              // 准备游戏命令
   val BASE_GAME_CHANGE_CAREER = 0x040D      // 更改职业命令
 
-
+//BaseGameStartMatch
 
   // 炸弹相关命令
   val PUT_BOMB = 0x0501      // 放置炸弹命令

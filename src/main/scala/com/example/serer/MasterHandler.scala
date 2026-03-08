@@ -1,6 +1,6 @@
 package com.example.serer
 
-import com.example.commands.{CmdType, IPlayerCommand, ISystemCommand}
+import com.example.commands.{IPlayerCommand, ISystemCommand}
 import com.example.exception.BusinessException
 import com.example.holder.PlayerHolder
 import com.example.message.Message
@@ -16,14 +16,14 @@ import scala.collection.mutable
  */
 @Sharable
 object MasterHandler extends SimpleChannelInboundHandler[Message] {
-  // 定义玩家ID的属性键
+  // 在管道中定义玩家ID的属性键
   final val ATTR_PLAYER_ID = AttributeKey.valueOf[String]("playerId")
 
   // 缓存类和方法的映射，用于提高性能
   private val clsCache = mutable.Map[String, Object]()
   private val methodCache = mutable.Map[(String, String), java.lang.reflect.Method]()
 
-  // 需要记录日志的命令集合（已注释）
+  // 需要记录日志的命令集合
 //  private val logFilterCommands: Set[String] = Set(CmdType.MOVE, CmdType.HEARTBEAT).map(toHexString)
 
   /**
@@ -41,9 +41,9 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
   override def channelRead0(ctx: ChannelHandlerContext, message: Message): Unit = {
     // 将命令转换为十六进制字符串
     val cmd = toHexString(message.getCommand)
-    // 获取通道（已注释）
+    // 获取通道
 //    val channel = ctx.channel()
-    // 如果命令不在过滤列表中，则打印接收到的消息（已注释）
+    // 如果命令不在过滤列表中，则打印接收到的消息
 //    if (!logFilterCommands.contains(cmd)) println(s"Received message with command: 0x$cmd from channel: $channel")
     // 根据命令构建类名和方法名
     val clsName = s"com.example.commands.Command${cmd.take(2)}$$"
@@ -88,6 +88,7 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
   override def channelInactive(ctx: ChannelHandlerContext): Unit = {
     super.channelInactive(ctx)
     val ch = ctx.channel()
+    // 通过反射调用 onDisConnect 方法
     val playerId = ch.attr(ATTR_PLAYER_ID).get()
     if (playerId != null) {
       val player = PlayerHolder.getPlayer(playerId)

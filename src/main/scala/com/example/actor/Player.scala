@@ -116,7 +116,9 @@ class Player(pid: String) extends Actor(pid) {
   def putBomb(): Unit = {
     // 检查炸弹数量是否达到上限
     if (bombNum >= attr.MaxBombCount) ThrowBusinessException(s"你放的炸弹太多了，等炸弹爆炸了再放吧")
-//    println(s"玩家[$id]放了一个炸弹 当前炸弹数量[$bombNum] 总共炸弹数量[${attr.bombFuseTime}] 当前时间[${System.currentTimeMillis()}] 上次放炸弹时间[$lastPutBombTime] 炸弹冷却时间[${attr.Cooldown}]")
+//    println(s"玩家[$id]放了一个炸弹 当前炸弹数量[$bombNum] 总共炸弹数量[${attr.bombFuseTime}]
+    //    当前时间[${System.currentTimeMillis()}]
+    //    上次放炸弹时间[$lastPutBombTime] 炸弹冷却时间[${attr.Cooldown}]")
     // 检查是否在炸弹冷却时间内
     if (System.currentTimeMillis() - lastPutBombTime < attr.Cooldown) ThrowBusinessException(s"你放炸弹太快了，等会再放吧")
 

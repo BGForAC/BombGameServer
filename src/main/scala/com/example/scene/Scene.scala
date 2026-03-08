@@ -114,7 +114,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def walkable(x: Int, y: Int, z: Int): Boolean = {
     true
     // 注释掉的代码可能是用于检查地图上某点是否可通行
-//    map.walkable(x, y, z)
+    //map.walkable(x, y, z)
   }
 }
 

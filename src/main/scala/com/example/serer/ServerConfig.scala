@@ -19,6 +19,8 @@ object ServerConfig {
     props
   }
 
+  val clientHost: String = properties.getProperty("server.host")
+
   // 获取服务器端口号配置
   val clientPort: Int = properties.getProperty("server.port").toInt
 

@@ -6,8 +6,8 @@ import com.example.utils.ClassUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
-import io.netty.channel.{ChannelHandler, ChannelInitializer}
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.channel.{ChannelHandler, ChannelInitializer}
 
 /**
  * 游戏服务器主对象
@@ -78,12 +78,13 @@ object GameServer {
     // 设置使用NioServerSocketChannel
     bootstrap.channel(classOf[NioServerSocketChannel])
     // 设置线程组，分别用于处理accept和read/write事件
-    bootstrap.group(new NioEventLoopGroup(ServerConfig.bossThreadNum), new NioEventLoopGroup(ServerConfig.workerThreadNum))
+    bootstrap.group(new NioEventLoopGroup(ServerConfig.bossThreadNum),
+      new NioEventLoopGroup(ServerConfig.workerThreadNum))
     // 设置子处理器，用于处理客户端连接
     bootstrap.childHandler(childHandler)
     // 绑定端口并同步等待
-    bootstrap.bind(port).sync()
+    bootstrap.bind(ServerConfig.clientHost,port).sync()
     // 打印服务器启动信息
-    println(s"Game server started on port $port")
+    println(s"游戏服务器在 ${ServerConfig.clientHost}:$port 上启动成功")
   }
 }

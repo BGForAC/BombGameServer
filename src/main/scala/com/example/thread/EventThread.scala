@@ -39,6 +39,9 @@ object EventThread extends Runnable {
             // 匹配错误，打印堆栈信息
             case e: MatchError =>
               e.printStackTrace()
+              // 其他情况，打印异常信息
+            case _ =>
+              println(s"Tick error: ${t.getMessage}")
           }
         // 捕获其他异常（虽然上面的 case 已经覆盖了所有情况）
         case e: Exception =>
