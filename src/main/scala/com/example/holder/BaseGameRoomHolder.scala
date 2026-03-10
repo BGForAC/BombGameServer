@@ -3,7 +3,9 @@ package com.example.holder
 import com.example.commands.CmdType
 import com.example.exception.ThrowBusinessException
 import com.example.message.{Message, MessageBody}
+import com.example.scene.BaseGameScene
 import com.example.serer.PlayerChannels
+import com.example.service.PlayerService
 
 import scala.collection.mutable
 import scala.util.Random
@@ -89,6 +91,55 @@ object BaseGameRoomHolder {
     }
     rooms -= roomId // 从房间映射中移除
     println(s"[RemoveRoom] 房间 ID: $roomId 已从管理列表中移除")
+  }
+
+  def startGame(playerId: String) : Unit = {
+    playerId2Room.get(playerId) match {
+      case Some(room) =>{
+        if (room.leaderId != playerId) {
+          println(s"[StartGame] 失败: 操作者 $playerId 不是房主 (当前房主: ${room.leaderId})")
+          ThrowBusinessException("只有房主才能开始游戏")
+        }
+        room.startGame()
+        println(s"[StartGame] 成功: 房间 ${room.id} 开始游戏")
+      }
+      case None => {
+        println(s"[StartGame] 失败: 目标玩家 $playerId 不在房间中")
+        ThrowBusinessException("目标不在任何房间中")
+      }
+    }
+  }
+
+  def changeMap(playerId: String, mapIndex: Int): Unit = {
+    playerId2Room.get(playerId) match {
+      case Some(room) => {
+        // 只有房主才能更换房主
+        if (playerId != room.leaderId) {
+          println(s"[ChangeMap] 失败: 操作者 $playerId 不是房主 (当前房主: ${room.leaderId})")
+          ThrowBusinessException("只有房主才能更换房主")
+        }
+        room.changeMap(mapIndex) // 更换地图
+        println(s"[ChangeMap] 地图更换成功！")
+      }
+      case None => {
+        println(s"[ChangeLeader] 失败: 目标玩家 $playerId 不在房间中")
+        ThrowBusinessException("目标不在任何房间中")
+      }
+    }
+  }
+
+  def sendRoomMessage(playerId: String, message: Message): Unit = {
+    println(s"[SendRoomMessage] 玩家 $playerId 发送消息到房间")
+    playerId2Room.get(playerId) match {
+      case Some(room) => {
+        val msg = message.getString("message")
+        room.sendRoomMessage(playerId, new Message(CmdType.BASE_GAME_PLAYER_SEND_MESSAGE
+          , MessageBody({
+            "message" -> s"${PlayerService.getPlayerName(playerId)}说：$msg"
+          })))
+      }
+      case None => ThrowBusinessException("玩家不在任何房间中")
+    }
   }
 
   /**
@@ -221,8 +272,19 @@ object BaseGameRoomHolder {
    * @return 房间信息消息体
    */
   def info: MessageBody = {
-    MessageBody("rooms" -> rooms.values.map(_.infoStr).mkString("%")) // 组装所有房间的信息
+    var x = MessageBody()
+    var i = 0
+    rooms.values.foreach(room => {
+      x = MessageBody.addMessageBody(x , MessageBody(s"room${i}" -> room.infoStr))
+      i = i + 1
+    })
+    if(x == MessageBody()){
+      MessageBody("rooms" -> "")
+    }else {
+      MessageBody("rooms" -> x) // 组装所有房间的信息
+    }
   }
+
 
   /**
    * 房间成员类
@@ -238,8 +300,8 @@ object BaseGameRoomHolder {
      * 获取成员信息
      * @return 成员信息字符串
      */
-    def info: String = {
-      player.baseInfoStr(Seq(("isReady" -> isReady))) // 生成成员信息字符串
+    def info: MessageBody = {
+      player.baseInfoStr(MessageBody("isReady" -> isReady, "id" -> id)) // 生成成员信息字符串
     }
 
     /**
@@ -267,6 +329,8 @@ object BaseGameRoomHolder {
     }
   }
 
+
+
   /**
    * 房间类
    * @param id 房间ID
@@ -283,6 +347,12 @@ object BaseGameRoomHolder {
 
     // 房间最大容量
     private val roomSize: Int = 4
+
+    // 地图ID
+    private var mapIndex = 0
+
+    private var isStartGame = false
+
 
     /**
      * 设置房主
@@ -394,22 +464,33 @@ object BaseGameRoomHolder {
     }
 
     private def notifyRoomChange(): Unit = {
-      // println(s"[NotifyChange] 房间 $id 状态变更，通知成员") // 可选，日志量可能较大
+      //println(s"[NotifyChange] 房间 $id 状态变更，通知成员 info = ${info.toJsonString}") // 可选，日志量可能较大
       roomMember.keys.foreach(playerId => {
-        PlayerChannels.send(playerId, Message(CmdType.BASE_GAME_CURRENT_ROOM_CHANGE, info))
+        PlayerChannels.send(playerId, Message(CmdType.BASE_GAME_CURRENT_ROOM_CHANGE,
+          info))
       }) // 通知所有成员房间状态变化
     }
 
+    def sendRoomMessage(playerId: String, message: Message): Unit = {
+      roomMember.keys.foreach(playerId =>
+        PlayerChannels.send(playerId, message))
+    }
+
+
+
     private def info: MessageBody = {
-      val memberInfo = roomMember.values.map(_.info).mkString("|")
-      MessageBody("roomId" -> id, "roomName" -> roomName, "members" -> memberInfo, "leaderId" -> leaderId, // 组装所有成员信息
-        "leaderName" -> leaderName, "memberCnt" -> roomMember.size)
+      var memberInfos = MessageBody()
+      var i = 0;
+      roomMember.values.foreach( roomMember =>{
+        memberInfos = MessageBody.addMessageBody(memberInfos ,MessageBody(s"member${i}" -> roomMember.info))
+        i = i + 1
+      })
+      MessageBody("roomId" -> id, "roomName" -> roomName, "members" -> memberInfos, "leaderId" -> leaderId, // 组装所有成员信息
+        "leaderName" -> leaderName, "memberCnt" -> roomMember.size, "mapIndex" -> mapIndex)
     } // 组装房间信息
 
-    def infoStr: String = {
-      info.toSeq.map { case (key, any) =>
-        s"$key?${any.toString}"
-      }.mkString("-") // 将房间信息转换为字符串格式
+    def infoStr: MessageBody = {
+      info // 将房间信息转换为字符串格式
     }
 
     def changeLeader(targetId: String): Unit = {
@@ -418,6 +499,77 @@ object BaseGameRoomHolder {
       notifyRoomChange() // 设置新房主
       PlayerChannels.alert(targetId, s"你成为了队伍 ${roomName} 的队长") // 通知房间状态变化
     } // 通知新房主
+
+    def changeMap(mapIndex: Int): Unit = {
+      this.mapIndex = mapIndex
+      notifyRoomChange() // 通知房间状态变化
+    }
+
+    def startGame(): Unit = {
+      //验证玩家是否都准备
+      roomMember.values.foreach( roomMember =>{
+        if(!roomMember.isReady){
+          PlayerChannels.alert(leaderId, "存在玩家未准备")
+          ThrowBusinessException("玩家未准备")
+        }
+      })
+      isStartGame = true
+
+      // 获取房间中的所有玩家
+      val playerIds = roomMember.keys.toArray
+      val players = playerIds.map(id => (id, PlayerHolder.getPlayer(id)))
+
+      // 检查是否有离线玩家
+      val offLinePlayers = players.filter(_._2 == null)
+      if (offLinePlayers.nonEmpty) {
+        // 移除离线玩家
+        offLinePlayers.foreach { case (playerId, _) =>
+          println(s"玩家[$playerId]已离线，移出房间")
+          removeMember(playerId)
+        }
+        PlayerChannels.alert(leaderId, "存在离线玩家，无法开始游戏")
+        ThrowBusinessException("存在离线玩家，无法开始游戏")
+      }
+
+      // 创建游戏场景
+      val scene = SceneHolder.createScene(mapIndex)
+
+      // 将玩家加入场景
+      players.foreach { case (_, player) =>
+        SceneHolder.enterScene(scene.id, player)
+      }
+
+      // 获取场景中的玩家索引信息
+      val playerIdxInfo = scene.asInstanceOf[BaseGameScene].playerIdxInfo
+
+      // 验证玩家索引信息是否正确
+      if (playerIdxInfo.size != players.length) {
+        println(s"玩家索引信息数量[${playerIdxInfo.size}]与玩家数量[${players.length}]不匹配")
+        // 发送错误消息给所有玩家
+        players.foreach { case (playerId, _) =>
+          PlayerChannels.sendError(playerId, "游戏启动失败，有玩家没有成功进入场景")
+        }
+        ThrowBusinessException("游戏启动失败，有玩家没有成功进入场景")
+      }
+
+      // 构建玩家信息字符串
+      val playersInfo = playerIdxInfo.toSeq.sortBy(_._2).map{ case (playerId, idx) =>
+        val player = PlayerHolder.getPlayer(playerId)
+        player.baseInfoStr()
+      }.mkString("|")
+
+      // 发送进入游戏场景的消息给所有玩家
+      players.foreach { case (_, player) =>
+        PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(
+          Seq("mapId" -> mapIndex, "playersInfo" -> playersInfo): _*))
+        )
+      }
+
+      // 打印游戏启动成功信息
+      println(s"游戏启动成功，房间[$id]中的玩家[${players.mkString(",")}]进入场景")
+    }
+
+
   }
 
   private object Room extends AutoGrow {

@@ -54,7 +54,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     actor.setToScene(this)
     // 通知场景中的所有玩家有新角色进入
     players.values.foreach{ player =>
-      PlayerChannels.send(player.id, Message(CmdType.ENTER_SCENE, MessageBody((Seq("pid" -> actor.id) ++ actor.movement.info): _*)))
+      PlayerChannels.send(player.id, Message(CmdType.ENTER_SCENE, MessageBody(Seq("pid" -> actor.id) ++ actor.movement.info: _*)))
     }
     // 如果进入的是玩家，则添加到玩家列表
     actor match {

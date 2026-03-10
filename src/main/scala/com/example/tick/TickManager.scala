@@ -1,6 +1,7 @@
 package com.example.tick
 
 import com.example.holder.{BaseGameRoomHolder, BaseGameSceneHolder, SceneHolder}
+import com.example.serer.PlayerChannels
 
 /**
  * TickManager 是一个单例对象，负责管理游戏中的"tick"计数器
@@ -23,5 +24,8 @@ object TickManager {
     BaseGameSceneHolder.tick(currentTick)
     // 通知基础游戏房间持有者处理当前tick
     BaseGameRoomHolder.tick(currentTick)
+    //心跳
+    PlayerChannels.tick()
+
   }
 }

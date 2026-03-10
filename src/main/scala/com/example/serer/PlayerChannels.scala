@@ -13,6 +13,7 @@ object PlayerChannels {
   // 使用可变Map存储玩家ID和对应的ChannelHandlerContext
   private val channels = scala.collection.mutable.Map[String, ChannelHandlerContext]()
 
+  private var lastHeartbeatTime = 0L
   /**
    * 添加玩家通道
    * @param playerId 玩家唯一标识符
@@ -41,8 +42,6 @@ object PlayerChannels {
       case None => println(s"玩家 $playerId 未找到.")  // 如果玩家不存在，打印提示信息
       case _ => println("未知的message类型")  // 其他未知情况处理
     }
-
-
   }
 
   /**
@@ -95,5 +94,30 @@ object PlayerChannels {
    */
   def infoAll(msg: String): Unit = {
     sendToAll(Message(CmdType.INFO, MessageBody("msg" -> msg)))
+  }
+
+  /**
+   * 定时检查玩家心跳状态
+   * 遍历所有玩家通道，检查其最后心跳时间是否超时
+   * 如果超过10秒未收到心跳，则关闭该玩家的连接通道
+   */
+  def tick(): Unit = {
+    // TODO: 检查心跳
+    val currentTime = System.currentTimeMillis()
+    if(currentTime - lastHeartbeatTime > 10000){
+      channels.foreach({case (playerId, ctx) =>
+        // 获取该玩家最后心跳时间，如果超过10秒未收到心跳，则执行超时处理(两次心跳时间)
+        if (currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 10000) {
+          // TODO: 超时处理
+          println(s"[Heartbeat]玩家 $playerId 超时")
+/*          // 调用玩家的断开连接处理逻辑
+          PlayerHolder.getPlayer(playerId).onDisConnect()
+          // 关闭该玩家的网络连接
+          ctx.close()*/
+        }
+      })
+      lastHeartbeatTime = currentTime
+    }
+
   }
 }

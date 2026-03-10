@@ -72,7 +72,7 @@ object BaseGameSceneFacade extends SceneFacade {
   override val keySet: Set[Int] = Set(SceneType.BASE_GAME)
 
   /**
-   * 检查演员是否可以进入场景
+   * 检查玩家是否可以进入场景
    * @param actor 想要进入场景的演员对象
    * @return 返回布尔值表示是否允许进入
    */

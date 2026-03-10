@@ -22,22 +22,36 @@ object PlayerService {
    */
   def getPlayer(username: String, password: String): Player = {
     // 创建新玩家并生成唯一ID
-    val player = new Player(generatePlayerId())
+    var pid = generatePlayerId()
+    while (playerMap.keySet.contains(pid)){
+      pid = generatePlayerId()
+    }
+    val player = new Player(pid)
     // 设置玩家用户名
     player.uname = username
     // 以下是检查用户名是否存在的代码（已被注释）
-//    if (playerMap.values.exists(p => p.uname == username)) {
-//      ThrowBusinessException("用户名已存在")
-//    }
-    // 检查玩家ID是否已存在
-    if (playerMap.keySet.contains(player.id)) {
-      ThrowBusinessException("玩家ID已存在")
+    if (playerMap.values.exists(p => p.uname == username)) {
+      ThrowBusinessException("用户名已存在")
     }
+    // 检查玩家ID是否已存在
+//    if (playerMap.keySet.contains(player.id)) {
+//      ThrowBusinessException("玩家ID已存在")
+//    }
     // 将新玩家添加到玩家Map中
     playerMap += (player.id -> player)
     // 返回创建的玩家对象
     player
   }
+
+  def getPlayerName(pid : String): String = {
+    playerMap.get(pid) match {
+      case Some(player) => player.uname
+      case _ => "未知玩家"
+    }
+  }
+
+
+
 
   /**
    * 生成玩家ID的私有方法

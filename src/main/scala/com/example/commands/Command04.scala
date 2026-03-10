@@ -68,5 +68,16 @@ object Command04 extends IPlayerCommand {
     BaseGameRoomHolder.changeCareer(playerId, career)
   }
 
+  def handler0E(playerId: String, message: Message): Unit = {
+    BaseGameRoomHolder.changeMap(playerId, message.getInt("mapIndex"))
+  }
 
+  def handler0F(playerId: String, message: Message): Unit = {
+    BaseGameRoomHolder.sendRoomMessage(playerId, message)
+
+  }
+
+  def handler10(playerId: String, message: Message): Unit = {
+    BaseGameRoomHolder.startGame(playerId)
+  }
 }

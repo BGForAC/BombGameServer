@@ -1,5 +1,6 @@
 package com.example.commands
 
+import com.example.holder.PlayerHolder
 import com.example.message.{Message, MessageBody}
 import com.example.serer.{MasterHandler, PlayerChannels}
 import com.example.service.PlayerService
@@ -30,6 +31,8 @@ object Command01 extends ISystemCommand {
     val playerId = player.id
     // 将玩家ID绑定到通道属性中
     ctx.channel().attr(MasterHandler.ATTR_PLAYER_ID).set(playerId)
+    // 将当前时间戳绑定到通道属性中，用于心跳检测
+    ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).set(System.currentTimeMillis() + 10000)
     // 将通道添加到PlayerChannels中管理
     PlayerChannels.addChannel(playerId, ctx)
     // 返回成功响应，包含玩家ID
@@ -37,4 +40,31 @@ object Command01 extends ISystemCommand {
     // 打印连接信息
     println(s"Player $playerId has connected.")
   }
+
+  /**
+   * 心跳
+   * @param ctx Netty通道上下文，用于网络通信
+   * @param message 包含心跳信息的消息对象
+   */
+  def handler02(ctx: ChannelHandlerContext, message: Message): Unit ={
+    // 更新当前时间戳
+    ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).set(System.currentTimeMillis())
+    ctx.writeAndFlush(message.response(MessageBody("result" -> "success")))
+    //println(s"[Heartbeat] 已接受到玩家${ctx.channel().attr(MasterHandler.ATTR_PLAYER_ID).get()}的心跳包.")
+  }
+
+  /**
+   * 用于处理断开连接的事件
+   * @param ctx Netty通道上下文，用于网络通信
+   * @param message 包含断开连接信息的消息对象
+   */
+  def handler03(ctx: ChannelHandlerContext, message: Message): Unit ={
+    val playerId = ctx.channel().attr(MasterHandler.ATTR_PLAYER_ID).get()
+    PlayerHolder.getPlayer(playerId).onDisConnect()
+    println(s"Player $playerId has disconnected.")
+  }
+
+
+
+
 }

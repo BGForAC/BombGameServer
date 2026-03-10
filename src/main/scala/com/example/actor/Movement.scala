@@ -141,8 +141,8 @@ class Movement(owner: Actor) {
    * 获取角色位置信息
    * @return 包含角色位置信息的序列
    */
-  def info: Seq[(String, Any)] = {
-    if (sceneId == null) return Seq.empty
-    Seq("x" -> x, "y" -> y, "z" -> z, "angle" -> angle)
+  def info: MessageBody = {
+    if (sceneId == null) return MessageBody()
+    MessageBody("x" -> x, "y" -> y, "z" -> z, "angle" -> angle)
   }
 }

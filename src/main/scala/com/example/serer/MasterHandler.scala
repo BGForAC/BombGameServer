@@ -18,6 +18,8 @@ import scala.collection.mutable
 object MasterHandler extends SimpleChannelInboundHandler[Message] {
   // 在管道中定义玩家ID的属性键
   final val ATTR_PLAYER_ID = AttributeKey.valueOf[String]("playerId")
+  // 在管道中定义Heartbeat的属性键
+  final val ATTR_HEARTBEAT = AttributeKey.valueOf[Long]("heartbeat")
 
   // 缓存类和方法的映射，用于提高性能
   private val clsCache = mutable.Map[String, Object]()

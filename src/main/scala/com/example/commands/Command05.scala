@@ -26,8 +26,7 @@ object Command05 extends IPlayerCommand {
     // 向场景中所有玩家广播放置炸弹的消息
     scene.players.foreach { case (_, p) =>
       // 使用 PlayerChannels 发送消息，通知其他玩家有玩家放置了炸弹
-      PlayerChannels.send(p.id, Message(CmdType.PUT_BOMB, MessageBody(player.baseInfo: _*)))
+      PlayerChannels.send(p.id, Message(CmdType.PUT_BOMB, player.baseInfo))
     }
-
   }
 }

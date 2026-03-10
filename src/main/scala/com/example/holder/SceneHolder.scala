@@ -40,6 +40,7 @@ object SceneHolder extends Scanner[Int, SceneFacade] {
     scene
   }
 
+
   /**
    * 添加场景到场景持有者
    * @param scene 要添加的场景对象

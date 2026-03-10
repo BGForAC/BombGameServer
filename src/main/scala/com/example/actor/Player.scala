@@ -2,6 +2,7 @@ package com.example.actor
 
 import com.example.exception.ThrowBusinessException
 import com.example.holder.{PlayerHolder, SceneHolder}
+import com.example.message.MessageBody
 import com.example.scene.Scene
 import com.example.serer.PlayerChannels
 
@@ -74,15 +75,21 @@ class Player(pid: String) extends Actor(pid) {
     }
   }
 
+
   /**
    * 获取玩家基本信息
    * @return 包含玩家基本信息的序列，如ID、用户名、职业和控制配置
    */
-  def baseInfo: Seq[(String, Any)] = {
+  def baseInfo: MessageBody = {
     // 返回玩家基本信息，包括移动属性和额外属性
     // 注释掉的代码是原来的实现方式，现在改为显式列出所有属性
-//    movement.info ++ attr.info
-    movement.info ++ Seq(("id", id), ("uname", uname), ("career", career), ("controlConfig", controlConfig))
+    //    movement.info ++ attr.info
+    val info = movement.info
+    info += "uname" -> uname
+    info += "career" -> career
+    info += "controlConfig" -> controlConfig
+    //println(info.toJsonString)
+    info
   }
 
   /**
@@ -90,9 +97,9 @@ class Player(pid: String) extends Actor(pid) {
    * @param extraInfo 额外的信息序列，默认为空
    * @return 格式化后的玩家信息字符串
    */
-  def baseInfoStr(extraInfo: Seq[(String, Any)] = Seq.empty): String = {
+  def baseInfoStr(extraInfo: MessageBody = MessageBody()): MessageBody = {
     // 将额外信息和基本信息合并，然后转换为字符串
-    (extraInfo ++ baseInfo).map{case (k, v) => s"$k:$v"}.mkString(",")
+    MessageBody.addMessageBody(baseInfo, extraInfo)
   }
 
   /**

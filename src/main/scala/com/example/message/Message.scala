@@ -167,15 +167,53 @@ object MessageBody {
     fromJson(formatString)
   }
 
+  def addMessageBody(messageBody: MessageBody, oldMessageBody : MessageBody ): MessageBody = {
+    oldMessageBody.foreach { case (key, value) =>
+      messageBody.put(key, value)
+    }
+    messageBody
+  }
+
   def main(args: Array[String]): Unit = {
-    val jsonString = """{"key1":"value1","key2":{"subKey1":"subValue1","subKey2":"subValue2"},"key3":"value3"}"""
-    val messageBody = fromJson(jsonString)
-    println(messageBody)
-    println(messageBody.toJsonString)
+//    val jsonString = """{"key1":"value1","key2":{"subKey1":"subValue1","subKey2":"subValue2"},"key3":"value3"}"""
+//    val messageBody = fromJson(jsonString)
+//    println(messageBody)
+//    println(messageBody.toJsonString)
+    val x = MessageBody(
+      {"key1" -> "value1"},
+      {"key2" -> "value2"},
+      {"key3" -> MessageBody(
+        {"subKey1" -> MessageBody(
+          {"subKey1.1" -> "subValue1.1"},
+          {"subKey1.2" -> "subValue1.2"}
+        )},
+        {"subKey2" -> "subValue2"}
+      )}
+    )
+    val y = MessageBody(
+      {"keyy1" -> "valuey1"},
+      {"keyy2" -> "valuey2"},
+      {"keyy3" -> MessageBody(
+        {"subKeyy1" -> "subValuey1"},
+        {"subKeyy2" -> "subValuey2"}
+      )}
+    )
+
+    println(x.toJsonString)
+    println(y.toJsonString)
+    println(addMessageBody(x,y).toJsonString)
+    println(x.toJsonString)
+    var aa = Message.fromByteBuf(Message(CmdType.INVALID, x).toByteBuf)
+    println(aa.getBody.toJsonString)
+
+
+/*    val a = MessageBody.fromBytes(x.toBytes).toJsonString
+
+    println(a)*/
   }
 
   // 数据是json类型的字符串，只有字符串或json类型的value
-  private def fromJson(jsonString: String): MessageBody = {
+  def fromJson(jsonString: String): MessageBody = {
     if (!jsonString.startsWith("{") || !jsonString.endsWith("}")) {
       throw new RuntimeException(s"无效的消息体格式：$jsonString")
     }
@@ -207,7 +245,7 @@ object MessageBody {
         }
         val value = content.substring(0, valueEndIndex + 1)
         mb.put(key, fromJson(value))
-        content = content.substring(valueEndIndex + 2).trim
+        content = if (valueEndIndex + 1 >= content.length) "" else content.substring(valueEndIndex + 2).trim
       } else {
         val valueEndIndex = content.indexOf(",") match {
           case -1 => content.length
@@ -248,7 +286,7 @@ class MessageBody extends mutable.HashMap[String, Any] {
     formatString.getBytes(StandardCharsets.UTF_8)
   }
 
-  private def toJsonString: String = {
+  def toJsonString: String = {
     val ret = new StringBuilder("{")
     this.foreach { case (k, v) =>
       v match {
