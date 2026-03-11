@@ -1,7 +1,6 @@
 package com.example.tick
 
-import com.example.holder.{BaseGameRoomHolder, BaseGameSceneHolder, SceneHolder}
-import com.example.serer.PlayerChannels
+import scala.collection.mutable
 
 /**
  * TickManager 是一个单例对象，负责管理游戏中的"tick"计数器
@@ -11,6 +10,12 @@ object TickManager {
   // 当前游戏tick计数器，从0开始，每tick一次增加1
   private var currentTick: Long = 0
 
+  private val executors: mutable.ListBuffer[ITick] = mutable.ListBuffer.empty[ITick]
+
+  def addExecutor(executor: ITick): Unit = {
+    executors += executor
+  }
+
   /**
    * tick方法会在每个游戏循环中被调用
    * 它会增加当前tick计数，并通知所有游戏场景和房间处理新的tick
@@ -18,14 +23,6 @@ object TickManager {
   def tick(): Unit = {
     // 增加当前tick计数
     currentTick += 1
-    // 通知场景持有者处理当前tick
-    SceneHolder.tick(currentTick)
-    // 通知基础游戏场景持有者处理当前tick
-    BaseGameSceneHolder.tick(currentTick)
-    // 通知基础游戏房间持有者处理当前tick
-    BaseGameRoomHolder.tick(currentTick)
-    //心跳
-    PlayerChannels.tick()
-
+    executors.foreach(_.tick(currentTick))
   }
 }

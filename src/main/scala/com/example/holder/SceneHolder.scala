@@ -5,6 +5,7 @@ import com.example.config.SceneConfig
 import com.example.exception.ThrowBusinessException
 import com.example.reflect.Scanner
 import com.example.scene.{Scene, SceneFacade}
+import com.example.tick.ITick
 
 import scala.collection.mutable
 
@@ -12,7 +13,7 @@ import scala.collection.mutable
  * 场景持有者类，负责管理所有游戏场景
  * 继承自Scanner[Int, SceneFacade]，用于扫描和获取场景门面
  */
-object SceneHolder extends Scanner[Int, SceneFacade] {
+object SceneHolder extends Scanner[Int, SceneFacade] with ITick {
   // 使用可变Map存储场景，key为场景ID，value为场景对象
   private val scenes: mutable.Map[String, Scene] = mutable.Map()
 
