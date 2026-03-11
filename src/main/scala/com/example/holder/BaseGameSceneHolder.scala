@@ -5,6 +5,7 @@ import com.example.exception.ThrowBusinessException
 import com.example.message.{Message, MessageBody}
 import com.example.scene.BaseGameScene
 import com.example.serer.PlayerChannels
+import com.example.tick.ITick
 
 import scala.collection.mutable
 import scala.util.Random
@@ -13,7 +14,7 @@ import scala.util.Random
  * 游戏场景持有者类，用于管理和匹配玩家到不同的游戏场景
  * 该对象单例模式，负责管理所有游戏场景的匹配逻辑
  */
-object BaseGameSceneHolder {
+object BaseGameSceneHolder extends ITick {
   // key: mapId 0-随机 其他-固定地图
   // value: MatchQueue
 

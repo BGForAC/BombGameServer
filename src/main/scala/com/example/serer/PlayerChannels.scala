@@ -3,13 +3,14 @@ package com.example.serer
 import com.example.commands.CmdType
 import com.example.exception.ExceptionType
 import com.example.message.{ErrorMessage, Message, MessageBody}
+import com.example.tick.ITick
 import io.netty.channel.ChannelHandlerContext
 
 /**
  * PlayerChannels 对象用于管理所有玩家网络连接的通道
  * 它提供了添加、移除通道，以及向指定玩家或所有玩家发送消息的功能
  */
-object PlayerChannels {
+object PlayerChannels extends ITick {
   // 使用可变Map存储玩家ID和对应的ChannelHandlerContext
   private val channels = scala.collection.mutable.Map[String, ChannelHandlerContext]()
 
@@ -101,7 +102,7 @@ object PlayerChannels {
    * 遍历所有玩家通道，检查其最后心跳时间是否超时
    * 如果超过10秒未收到心跳，则关闭该玩家的连接通道
    */
-  def tick(): Unit = {
+  def tick(tickIndex: Long): Unit = {
     // TODO: 检查心跳
     val currentTime = System.currentTimeMillis()
     if(currentTime - lastHeartbeatTime > 10000){

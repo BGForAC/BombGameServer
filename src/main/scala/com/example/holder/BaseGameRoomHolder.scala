@@ -6,6 +6,7 @@ import com.example.message.{Message, MessageBody}
 import com.example.scene.BaseGameScene
 import com.example.serer.PlayerChannels
 import com.example.service.PlayerService
+import com.example.tick.ITick
 
 import scala.collection.mutable
 import scala.util.Random
@@ -14,7 +15,7 @@ import scala.util.Random
  * 游戏房间持有者类，负责管理所有游戏房间的创建、销毁和状态更新
  * 提供房间的增删改查、成员管理、状态同步等功能
  */
-object BaseGameRoomHolder {
+object BaseGameRoomHolder extends ITick {
   // 玩家ID到房间的映射
   private val playerId2Room: mutable.Map[String, Room] = mutable.Map.empty
   // 房间ID到房间的映射
@@ -133,10 +134,9 @@ object BaseGameRoomHolder {
     playerId2Room.get(playerId) match {
       case Some(room) => {
         val msg = message.getString("message")
-        room.sendRoomMessage(playerId, new Message(CmdType.BASE_GAME_PLAYER_SEND_MESSAGE
-          , MessageBody({
-            "message" -> s"${PlayerService.getPlayerName(playerId)}说：$msg"
-          })))
+        room.sendRoomMessage(playerId, new Message(CmdType.BASE_GAME_PLAYER_SEND_MESSAGE, MessageBody({
+          "message" -> s"${PlayerService.getPlayerName(playerId)}说：$msg"
+        })))
       }
       case None => ThrowBusinessException("玩家不在任何房间中")
     }
