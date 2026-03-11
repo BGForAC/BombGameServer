@@ -41,6 +41,9 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
    * @param message 收到的消息
    */
   override def channelRead0(ctx: ChannelHandlerContext, message: Message): Unit = {
+    // 增加JMX消息计数
+    com.example.monitor.GameServerMonitor.incrementMessageCount()
+
     // 将命令转换为十六进制字符串
     val cmd = toHexString(message.getCommand)
     // 获取通道

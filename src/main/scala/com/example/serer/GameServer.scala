@@ -16,10 +16,11 @@ import io.netty.channel.{ChannelHandler, ChannelInitializer}
 object GameServer {
   /**
    * 启动游戏服务器的主方法
-   * 依次执行加载配置、初始化场景和启动客户端连接服务
+   * 依次执行加载配置、初始化JMX监控、初始化场景和启动客户端连接服务
    */
   def run(): Unit = {
     loadConfigs()  // 加载所有配置
+    initJMX()      // 初始化JMX监控
     initHolder()   // 初始化场景持有者
     clientSocket() // 启动客户端连接服务
   }
@@ -41,6 +42,14 @@ object GameServer {
         case _: Exception =>  // 忽略所有异常
       }
     }
+  }
+
+  /**
+   * 初始化JMX监控
+   * 注册游戏服务器监控MBean
+   */
+  private def initJMX(): Unit = {
+    com.example.monitor.GameServerMonitor.initJMX()
   }
 
   /**

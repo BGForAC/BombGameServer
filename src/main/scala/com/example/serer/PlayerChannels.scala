@@ -120,4 +120,23 @@ object PlayerChannels {
     }
 
   }
+
+  /**
+   * 获取当前通道数量，用于JMX监控
+   * @return 当前在线玩家数量
+   */
+  def getChannelCount: Int = {
+    channels.size
+  }
+
+  /**
+   * 获取心跳超时的玩家数量，用于JMX监控
+   * @return 超时玩家数量
+   */
+  def getTimeoutPlayerCount: Int = {
+    val currentTime = System.currentTimeMillis()
+    channels.count { case (_, ctx) =>
+      currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 10000
+    }
+  }
 }
