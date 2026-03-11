@@ -88,6 +88,7 @@ class Player(pid: String) extends Actor(pid) {
     info += "uname" -> uname
     info += "career" -> career
     info += "controlConfig" -> controlConfig
+    info += "id" -> id
     //println(info.toJsonString)
     info
   }

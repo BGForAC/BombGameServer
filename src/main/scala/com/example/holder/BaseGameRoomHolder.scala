@@ -517,7 +517,16 @@ object BaseGameRoomHolder {
 
       // 获取房间中的所有玩家
       val playerIds = roomMember.keys.toArray
-      val players = playerIds.map(id => (id, PlayerHolder.getPlayer(id)))
+      val players = playerIds.map(id =>{
+        val player = PlayerHolder.getPlayer(id)
+        player.attr.initAttr(player.career)
+        (id, PlayerHolder.getPlayer(id))
+      })
+
+      players.foreach( player => {
+
+      })
+
 
       // 检查是否有离线玩家
       val offLinePlayers = players.filter(_._2 == null)
@@ -531,8 +540,25 @@ object BaseGameRoomHolder {
         ThrowBusinessException("存在离线玩家，无法开始游戏")
       }
 
+      // 验证地图ID是否有效
+      if (mapIndex < 0) {
+        PlayerChannels.alert(leaderId, s"地图ID[$mapIndex]无效，无法开始游戏")
+        ThrowBusinessException(s"地图ID[$mapIndex]无效，无法开始游戏")
+      }
+
+      // 确定实际使用的地图ID
+      val actualMapId = if (mapIndex == 0) {
+        // 如果mapIndex为0，则随机选择一个地图
+        // 这里假设地图ID从1开始，最大值为mapCnt
+        val mapCnt = 1 // 地图数量，表示可用的地图总数
+        val baseSceneId = 1 // 基础场景ID，作为随机地图的起始ID
+        Random.nextInt(mapCnt) + baseSceneId
+      } else {
+        mapIndex
+      }
+
       // 创建游戏场景
-      val scene = SceneHolder.createScene(mapIndex)
+      val scene = SceneHolder.createScene(actualMapId)
 
       // 将玩家加入场景
       players.foreach { case (_, player) =>
@@ -553,16 +579,16 @@ object BaseGameRoomHolder {
       }
 
       // 构建玩家信息字符串
-      val playersInfo = playerIdxInfo.toSeq.sortBy(_._2).map{ case (playerId, idx) =>
+      var playersInfo = MessageBody()
+      playerIdxInfo.keys.foreach( playerId => {
         val player = PlayerHolder.getPlayer(playerId)
-        player.baseInfoStr()
-      }.mkString("|")
+        playersInfo = MessageBody.addMessageBody(playersInfo, MessageBody(playerId -> player.baseInfoStr()))
+      })
 
       // 发送进入游戏场景的消息给所有玩家
       players.foreach { case (_, player) =>
         PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(
-          Seq("mapId" -> mapIndex, "playersInfo" -> playersInfo): _*))
-        )
+          "mapId" -> actualMapId, "playersInfo" -> playersInfo)))
       }
 
       // 打印游戏启动成功信息

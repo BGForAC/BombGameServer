@@ -1,5 +1,7 @@
 package com.example.utils
 
+import java.net.URLDecoder
+
 /**
  * ClassUtil 工具类，用于获取指定包下的所有类
  */
@@ -21,7 +23,9 @@ object ClassUtil {
     // 遍历所有资源
     while (resources.hasMoreElements) {
       val resource = resources.nextElement()
-      val file = new java.io.File(resource.getFile)
+      // 使用 URLDecoder 解码文件路径，处理 URL 编码字符
+      val decodedPath = URLDecoder.decode(resource.getFile, "UTF-8")
+      val file = new java.io.File(decodedPath)
       // 如果资源是目录，则遍历其中的文件
       if (file.isDirectory) {
         file.listFiles().foreach { f =>

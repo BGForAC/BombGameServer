@@ -33,8 +33,8 @@ object SceneHolder extends Scanner[Int, SceneFacade] {
    * @return 创建的场景对象
    */
   def createScene(defId: Int): Scene = {
-    val sceneFacade = getSceneFacade(defId)
     val sceneDef = SceneConfig.getDef(defId)
+    val sceneFacade = getSceneFacade(defId)
     val scene = sceneFacade(sceneDef)
     addScene(scene)
     scene

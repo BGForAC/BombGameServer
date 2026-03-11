@@ -16,6 +16,7 @@ import scala.util.Random
 object BaseGameSceneHolder {
   // key: mapId 0-随机 其他-固定地图
   // value: MatchQueue
+
   private val matchQueues: mutable.Map[Int, MatchQueue] = mutable.Map.empty // 存储地图ID与对应匹配队列的映射关系
 
   private val minRoomSize = 1 // 最小房间人数，即开始游戏的最低人数要求
@@ -53,6 +54,12 @@ object BaseGameSceneHolder {
   def tick(tickIdx: Long): Unit = {
     matchQueues.values.foreach(_.tick(tickIdx))
   }
+
+  // 在 BaseGameSceneHolder 对象中添加
+  private[holder] def clearMatchQueues(): Unit = {
+    matchQueues.clear()
+  }
+
 
   /**
    * 匹配队列内部类，处理特定地图的玩家匹配逻辑
@@ -134,15 +141,15 @@ object BaseGameSceneHolder {
             }
 
             // 构建玩家信息字符串
-            val playersInfo = playerIdxInfo.toSeq.sortBy(_._2).map{ case (playerId, idx) =>
+            var playersInfo = MessageBody()
+            playerIdxInfo.keys.foreach( playerId => {
               val player = PlayerHolder.getPlayer(playerId)
-              player.baseInfoStr()
-            }.mkString("|")
+              playersInfo = MessageBody.addMessageBody(playersInfo, MessageBody(playerId -> player.baseInfoStr()))
+            })
             // 发送进入游戏场景的消息给所有玩家
             players.foreach { case (_, player) =>
               PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(
-                Seq("mapId" -> actualMapId, "playersInfo" -> playersInfo): _*))
-              )
+                "mapId" -> actualMapId, "playersInfo" -> playersInfo)))
             }
 
             // 打印匹配成功信息

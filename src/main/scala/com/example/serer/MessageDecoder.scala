@@ -26,13 +26,17 @@ class MessageDecoder extends LengthFieldBasedFrameDecoder(Message.MAX_LENGTH, 0,
       // 调用父类的decode方法进行基础解码
       super.decode(ctx, in) match {
         case byteBuf: ByteBuf =>  // 如果解码结果是ByteBuf类型
-          // 将ByteBuf转换为Message对象
+        try { // 将ByteBuf转换为Message对象
           val message = Message.fromByteBuf(byteBuf)
           message
+        }finally {
+          byteBuf.release()  // 释放ByteBuf资源
+        }
         case _ => null  // 其他情况返回null
       }
     } catch {
       case _ => null  // 捕获所有异常并返回null
     }
+
   }
 }
