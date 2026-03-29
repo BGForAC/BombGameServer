@@ -13,17 +13,11 @@ object Command03 extends IPlayerCommand {
    * @param message 包含位置信息的消息对象，其中包含x、y、z坐标和角度信息
    */
   def handler01(playerId: String, message: com.example.message.Message): Unit = {
-    // 从消息中获取玩家的x坐标
-    val x = message.getInt("x")
-    // 从消息中获取玩家的y坐标
-    val y = message.getInt("y")
-    // 从消息中获取玩家的z坐标
-    val z = message.getInt("z")
-    // 从消息中获取玩家的朝向角度
-    val angle = message.getFloat("angle")
-    // 根据玩家ID获取玩家对象
-    val player = PlayerHolder.getPlayer(playerId)
-    // 更新玩家的位置信息，包括坐标和朝向角度
-    player.movement.setPosition((x, y, z, angle))
+    val x = message.getInt("x")    // 从消息中获取玩家的x坐标
+    val y = message.getInt("y")    // 从消息中获取玩家的y坐标
+    val z = message.getInt("z")    // 从消息中获取玩家的z坐标
+    val angle = message.getFloat("angle")    // 从消息中获取玩家的朝向角度
+    val player = PlayerHolder.getPlayer(playerId)    // 根据玩家ID获取玩家对象
+    player.movement.setPosition((x, y, z, angle))    // 更新玩家的位置信息，包括坐标和朝向角度
   }
 }

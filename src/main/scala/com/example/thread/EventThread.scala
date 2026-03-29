@@ -9,7 +9,7 @@ import com.example.tick.TickManager
  */
 object EventThread extends Runnable {
   // 定义每秒帧率
-  private val framePerSec = 10
+  private val framePerSec = 30
   // 计算每帧的延迟时间（毫秒）
   private val frameDelay = 1000 / framePerSec
 

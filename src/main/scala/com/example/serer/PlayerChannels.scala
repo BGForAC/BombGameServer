@@ -107,10 +107,10 @@ object PlayerChannels extends ITick {
     val currentTime = System.currentTimeMillis()
     if(currentTime - lastHeartbeatTime > 10000){
       channels.foreach({case (playerId, ctx) =>
-        // 获取该玩家最后心跳时间，如果超过10秒未收到心跳，则执行超时处理(两次心跳时间)
-        if (currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 10000) {
+        // 获取该玩家最后心跳时间，如果超过10秒未收到心跳，则执行超时处理(三次心跳时间)
+        if (currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 15000) {
           // TODO: 超时处理
-          println(s"[Heartbeat]玩家 $playerId 超时")
+          println(s"[Heartbeat]玩家 $playerId 超时，断开连接")
 /*          // 调用玩家的断开连接处理逻辑
           PlayerHolder.getPlayer(playerId).onDisConnect()
           // 关闭该玩家的网络连接
@@ -137,7 +137,7 @@ object PlayerChannels extends ITick {
   def getTimeoutPlayerCount: Int = {
     val currentTime = System.currentTimeMillis()
     channels.count { case (_, ctx) =>
-      currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 10000
+      currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 15000
     }
   }
 }

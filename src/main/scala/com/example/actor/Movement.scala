@@ -96,7 +96,6 @@ class Movement(owner: Actor) {
       println(s"玩家${owner.id}尝试在不存在的场景移动，当前场景：$sceneId")
       return
     }
-
     // 保存上一次的位置
     lastX = x
     lastY = y
@@ -113,6 +112,10 @@ class Movement(owner: Actor) {
     // 检查目标位置是否可行走
     if (!curScene.walkable(x, y, z)) {
       println(s"玩家${owner.id}尝试在不可行走的场景位置移动，当前场景：$sceneId，位置：($x, $y, $z)")
+      x = lastX
+      y = lastY
+      z = lastZ
+      PlayerChannels.send(owner.id, Message(CmdType.MOVE, MessageBody((Seq("id" -> owner.id) ++ info): _*)))
       return
     }
     // 向场景中其他玩家广播移动消息

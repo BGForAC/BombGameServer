@@ -68,15 +68,22 @@ object BaseGameSceneHolder extends ITick {
    */
   private class MatchQueue(mapId: Int) {
     private val matchQueue: mutable.ListBuffer[String] = mutable.ListBuffer.empty // 存储等待匹配的玩家ID列表
+    private val playerSet: mutable.HashSet[String] = mutable.HashSet.empty // 存储等待匹配的玩家ID集合，用于快速查找
+
+    // 添加同步锁对象
+    private val lock = new Object()
 
     /**
      * 将玩家加入匹配队列
      * @param playerId 玩家ID
      */
     def addToMatchQueue(playerId: String): Unit = {
-      if (!matchQueue.contains(playerId)) {
-        matchQueue += playerId
-        println(s"玩家[$playerId]加入匹配队列")
+      lock.synchronized {
+        if (!playerSet.contains(playerId)) {
+          matchQueue += playerId
+          playerSet.add(playerId)
+          println(s"玩家[$playerId]加入匹配队列")
+        }
       }
     }
 
@@ -85,9 +92,12 @@ object BaseGameSceneHolder extends ITick {
      * @param playerId 玩家ID
      */
     def removeFromMatchQueue(playerId: String): Unit = {
-      if (matchQueue.contains(playerId)) {
-        matchQueue -= playerId
-        println(s"玩家[$playerId]离开匹配队列")
+      lock.synchronized {
+        if (playerSet.contains(playerId)) {
+          matchQueue -= playerId
+          playerSet.remove(playerId)
+          println(s"玩家[$playerId]离开匹配队列")
+        }
       }
     }
 
@@ -96,9 +106,10 @@ object BaseGameSceneHolder extends ITick {
      * @param tickIdx 当前定时器索引
      */
     def tick(tickIdx: Long): Unit = {
-      if (tickIdx % tickInterval == 0) {
-        // 当队列中的玩家数量达到最小房间人数时，开始创建房间
-        while (matchQueue.lengthCompare(minRoomSize) >= 0) {
+      lock.synchronized {
+        if (tickIdx % tickInterval == 0) {
+          // 当队列中的玩家数量达到最小房间人数时，开始创建房间
+          while (matchQueue.lengthCompare(minRoomSize) >= 0) {
           // 计算当前房间大小，取最小房间人数和剩余玩家数中的较小值
           val roomSize = Math.min(maxRoomSize, matchQueue.length)
           // 获取当前房间的玩家ID列表
@@ -116,6 +127,8 @@ object BaseGameSceneHolder extends ITick {
           } else {
             // 从匹配队列中移除已匹配的玩家
             matchQueue.remove(0, roomSize)
+            // 从playerSet中移除已匹配的玩家
+            playerIds.foreach(playerSet.remove)
             // 确定实际使用的地图ID
             val actualMapId = if (mapId == 0) {
               // 如果mapId为0，则随机选择一个地图
@@ -157,6 +170,7 @@ object BaseGameSceneHolder extends ITick {
             println(s"匹配成功，玩家[${players.mkString(",")}]进入场景")
           }
         }
+      }
       }
     }
 

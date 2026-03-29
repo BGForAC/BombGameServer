@@ -1,7 +1,7 @@
 
 package com.example.monitor
 
-import com.example.serer.{GameServer, PlayerChannels, ServerConfig}
+import com.example.serer.{PlayerChannels, ServerConfig}
 import io.netty.channel.ChannelHandlerContext
 
 import java.lang.management.ManagementFactory
@@ -52,6 +52,7 @@ object GameServerMonitor extends GameServerMXBean {
         e.printStackTrace()
     }
   }
+
 
   /**
    * 增加消息计数
