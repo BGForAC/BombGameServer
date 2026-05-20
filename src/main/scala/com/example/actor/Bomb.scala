@@ -1,6 +1,7 @@
 package com.example.actor
 
 import com.example.holder.SceneHolder
+import com.example.message.MessageBody
 
 /**
  * Bomb类表示游戏中的一个炸弹对象，继承自Actor类
@@ -42,6 +43,17 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
         player.hpChange(this, owner.attr.BombDamage)
       }
     }
+  }
+
+  /**
+   * 炸弹基本信息
+   *
+   */
+  def BombInfo(extraInfo: MessageBody = MessageBody()) : MessageBody ={
+    extraInfo += "BombId" -> id
+    extraInfo += "explodeTime" -> explodeTime
+    extraInfo += "createTime" -> (explodeTime - owner.attr.FuseTime)
+    extraInfo
   }
 }
 

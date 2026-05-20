@@ -1,5 +1,7 @@
 package com.example.config
 
+import com.example.message.MessageBody
+import com.example.message.MessageBody.fromJson
 import com.example.scene.SceneType
 
 /**
@@ -34,6 +36,8 @@ object SceneConfig extends IConfig {
       (1250, 40, 1250, 225f),
       (-1250, 40, 1250, 315f)
     )
+    // 设置地图信息
+    sceneDef.mapInfo = initMap(sceneDef.mapId)
     // 将场景定义添加到Map中
     sceneDefs += (1 -> sceneDef)
   }
@@ -55,6 +59,28 @@ object SceneConfig extends IConfig {
   def getDef(sceneId: Int): SceneDef = {
     sceneDefs.getOrElse(sceneId, null)
   }
+
+  def initMap(typ: String): MessageBody = {
+    // 构建属性文件路径
+    val filePath = s"map/$typ.json"
+    // 从类加载器中获取属性文件
+    val inputStream = getClass.getClassLoader.getResourceAsStream(filePath)
+    inputStream match {
+      case null =>
+        throw new RuntimeException(s"属性文件[$filePath]不存在")
+      case inputStream =>
+        try {
+          // 读取JSON内容
+          val content = scala.io.Source.fromInputStream(inputStream).mkString
+          // 使用已有的fromJson方法解析JSON
+          val messageBody = fromJson(content)
+          messageBody
+        } finally {
+          inputStream.close()
+        }
+    }
+  }
+
 }
 
 /**
@@ -74,4 +100,6 @@ class SceneDef {
   var maxPlayerCnt: Int = _
   // 地图ID
   var mapId: String = _
+
+  var mapInfo: MessageBody = _
 }

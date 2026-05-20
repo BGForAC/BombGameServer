@@ -179,7 +179,7 @@ object MessageBody {
 //    val messageBody = fromJson(jsonString)
 //    println(messageBody)
 //    println(messageBody.toJsonString)
-    val x = MessageBody(
+/*    val x = MessageBody(
       {"key1" -> "value1"},
       {"key2" -> "value2"},
       {"key3" -> MessageBody(
@@ -204,13 +204,44 @@ object MessageBody {
     println(addMessageBody(x,y).toJsonString)
     println(x.toJsonString)
     var aa = Message.fromByteBuf(Message(CmdType.INVALID, x).toByteBuf)
-    println(aa.getBody.toJsonString)
+    println(aa.getBody.toJsonString)*/
 
 
 /*    val a = MessageBody.fromBytes(x.toBytes).toJsonString
 
     println(a)*/
+
+
+    println(initMap("1").toJsonString)
+
+
+
+
+
   }
+
+  def initMap(typ: String): MessageBody = {
+    // 构建属性文件路径
+    val filePath = s"map/$typ.json"
+    // 从类加载器中获取属性文件
+    val inputStream = getClass.getClassLoader.getResourceAsStream(filePath)
+    inputStream match {
+      case null =>
+        throw new RuntimeException(s"属性文件[$filePath]不存在")
+      case inputStream =>
+        try {
+          // 读取JSON内容
+          val content = scala.io.Source.fromInputStream(inputStream).mkString
+          // 使用已有的fromJson方法解析JSON
+          val messageBody = fromJson(content)
+          messageBody
+        } finally {
+          inputStream.close()
+        }
+    }
+  }
+
+
 
   // 数据是json类型的字符串，只有字符串或json类型的value
   def fromJson(jsonString: String): MessageBody = {

@@ -47,10 +47,6 @@ object MasterHandler extends SimpleChannelInboundHandler[Message] {
     // 将命令转换为十六进制字符串
     val cmd = toHexString(message.getCommand)
     // 获取通道
-//    val channel = ctx.channel()
-    // 如果命令不在过滤列表中，则打印接收到的消息
-//    if (!logFilterCommands.contains(cmd)) println(s"Received message with command: 0x$cmd from channel: $channel")
-    // 根据命令构建类名和方法名
     val clsName = s"com.example.commands.Command${cmd.take(2)}$$"
     val methodName = s"handler${cmd.drop(2)}"
 

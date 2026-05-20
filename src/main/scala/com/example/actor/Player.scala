@@ -121,7 +121,7 @@ class Player(pid: String) extends Actor(pid) {
    * 检查玩家是否可以放置炸弹（数量限制和冷却时间）
    * 如果可以，则在当前场景中放置一个炸弹，并更新相关状态
    */
-  def putBomb(): Unit = {
+  def putBomb(): Bomb = {
     // 检查炸弹数量是否达到上限
     if (bombNum >= attr.MaxBombCount) ThrowBusinessException(s"你放的炸弹太多了，等炸弹爆炸了再放吧")
 //    println(s"玩家[$id]放了一个炸弹 当前炸弹数量[$bombNum] 总共炸弹数量[${attr.bombFuseTime}]
@@ -130,8 +130,9 @@ class Player(pid: String) extends Actor(pid) {
     // 检查是否在炸弹冷却时间内
     if (System.currentTimeMillis() - lastPutBombTime < attr.Cooldown) ThrowBusinessException(s"你放炸弹太快了，等会再放吧")
 
+    var bomb = Bomb(this)
     // 在当前场景中放置炸弹
-    SceneHolder.enterScene(movement.sceneId, Bomb(this))
+    SceneHolder.enterScene(movement.sceneId, bomb)
 
     // 更新炸弹数量和时间戳
     bombNum = bombNum + 1
@@ -140,5 +141,6 @@ class Player(pid: String) extends Actor(pid) {
       // 只有当炸弹从满到不满的时候才开始计算恢复炸弹的时间
       lastRecoverBombTime = System.currentTimeMillis()
     }
+    bomb
   }
 }

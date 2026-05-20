@@ -1,7 +1,7 @@
 package com.example.commands
 
 import com.example.holder.{PlayerHolder, SceneHolder}
-import com.example.message.{Message, MessageBody}
+import com.example.message.Message
 import com.example.serer.PlayerChannels
 
 /**
@@ -17,7 +17,11 @@ object Command05 extends IPlayerCommand {
     // 从 PlayerHolder 中获取玩家对象
     val player = PlayerHolder.getPlayer(playerId)
     // 调用玩家对象的 putBomb 方法放置炸弹
-    player.putBomb()
+    var bomb = player.putBomb()
+
+    var bombInfo = player.putBomb().BombInfo(player.baseInfo)
+
+
 
     // 获取玩家所在的场景ID
     val sceneId = player.movement.sceneId
@@ -26,7 +30,7 @@ object Command05 extends IPlayerCommand {
     // 向场景中所有玩家广播放置炸弹的消息
     scene.players.foreach { case (_, p) =>
       // 使用 PlayerChannels 发送消息，通知其他玩家有玩家放置了炸弹
-      PlayerChannels.send(p.id, Message(CmdType.PUT_BOMB, player.baseInfo))
+      PlayerChannels.send(p.id, Message(CmdType.PUT_BOMB, (player.baseInfo)))
     }
   }
 }
