@@ -42,6 +42,8 @@ class BaseGameScene(id: String, _def: SceneDef) extends Scene(id, _def) {
         // 索计数器递增
         idx = idx + 1
       case _ =>
+        // 非Player角色（如Bomb、PropsItem等）仍需进入场景，加入actors并注册tick
+        super.onEnter(actor)
     }
   }
 

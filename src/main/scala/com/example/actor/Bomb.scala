@@ -27,6 +27,8 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
   override def tick(tickIdx: Long): Unit = {
     // 检查是否到达爆炸时间
     if (!isExploded && System.currentTimeMillis() >= explodeTime) {
+      val remaining = explodeTime - System.currentTimeMillis()
+      println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id]到达爆炸时间 (延迟${-remaining}ms), 执行explode()")
       explode() // 执行爆炸
       // 从场景中移除炸弹
       SceneHolder.exitScene(this.movement.sceneId, this)
@@ -44,6 +46,8 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
   def explode(): Unit = {
     if (isExploded) return
     isExploded = true
+
+    println(s"[Bomb.explode] ===== 炸弹[$id]开始爆炸, owner=[${owner.id}] =====")
 
     // 获取炸弹所在的场景
     val scene = SceneHolder.getScene(movement.sceneId)
@@ -109,6 +113,12 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
     }
 
     // ===== 4. 广播炸弹爆炸事件 =====
+    val playerCount = scene.players.size
+    println(s"[Bomb.explode] 向场景内${playerCount}名玩家广播BOMB_EXPLODE: bombId=[$id], pos=($bombX,$bombZ), grid=($centerGridX,$centerGridZ), radius=$radius, 摧毁障碍物=${affectedObstacles.size}个")
+
+    // 序列化障碍物网格列表（格式: "gx1,gz1;gx2,gz2;..."）
+    val obstacleList = affectedObstacles.map { case (gx, gz) => s"$gx,$gz" }.mkString(";")
+
     scene.players.values.foreach { p =>
       PlayerChannels.send(p.id, Message(CmdType.BOMB_EXPLODE, MessageBody(
         "bombId" -> id,
@@ -118,11 +128,13 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
         "z" -> bombZ,
         "gridX" -> centerGridX,
         "gridZ" -> centerGridZ,
-        "radius" -> owner.attr.BombRadius
+        "radius" -> owner.attr.BombRadius,
+        "obstacles" -> obstacleList
       )))
     }
 
-    println(s"[Bomb] 炸弹[$id]爆炸: 伤害${affectedPlayers.size}名玩家, 摧毁${affectedObstacles.size}个方块, 连锁引爆${affectedBombs.size - 1}个炸弹")
+    val chainCount = affectedBombs.size - 1
+    println(s"[Bomb.explode] ===== 炸弹[$id]爆炸完成: 伤害${affectedPlayers.size}名玩家, 摧毁${affectedObstacles.size}个方块, 连锁引爆${chainCount}个炸弹 =====")
   }
 
   /**

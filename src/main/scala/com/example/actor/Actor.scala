@@ -52,7 +52,9 @@ abstract class Actor(aid: String) {
    * @param damage 伤害值
    */
   def hpChange(source: Actor, damage: Int): Unit = {
+    val oldHp = attr.hp
     attr.hp = attr.hp - damage
+    println(s"[HP_CHANGE] 角色[$id] 受到来源[${if (source != null) source.id else "null"}] 伤害=$damage, HP: $oldHp → ${attr.hp}")
     // 获取Actor当前所在的场景
     val scene = SceneHolder.getScene(movement.sceneId)
     // 如果场景不存在，抛出异常

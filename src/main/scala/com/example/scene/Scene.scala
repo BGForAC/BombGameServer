@@ -41,6 +41,33 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def tick(tickIdx: Long): Unit = {
     // 遍历场景中的所有角色并调用其tick方法
     actors.values.foreach(actor => actor.tick(tickIdx))
+
+    // 每帧广播玩家状态同步（HP + 属性 + 位置），确保客户端及时反映服务端权威状态
+    if (players.nonEmpty) {
+      players.values.foreach { p =>
+        val info = p.movement.info
+        if (!info.isEmpty) {
+          PlayerChannels.send(p.id, Message(CmdType.PLAYER_SYNC, MessageBody(
+            Seq(
+              "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
+              "level" -> p.attr.level, "exp" -> p.attr.exp,
+              "maxStamina" -> p.attr.maxStamina
+            ) ++ info: _*
+          )))
+        }
+      }
+    }
+
+    // 每60 tick输出一次场景摘要（约1秒，便于排查）
+    if (tickIdx % 60 == 0) {
+      val bombCount = actors.values.count(_.isInstanceOf[Bomb])
+      if (bombCount > 0 || players.nonEmpty) {
+        val hpInfo = players.values.map(p =>
+          s"${p.id}:HP=${p.attr.hp}/${p.attr.maxHp} Lv.${p.attr.level} Exp=${p.attr.exp}"
+        ).mkString(", ")
+        println(s"[Scene.tick] tick#$tickIdx 场景[$sceneId]: 总actor=${actors.size}, 炸弹=$bombCount, 玩家=${players.size} [$hpInfo]")
+      }
+    }
   }
 
   /**
@@ -60,6 +87,9 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     actor match {
       case player: Player =>
         players += (player.id -> player)
+        println(s"[Scene.onEnter] 玩家[${player.id}]进入场景[$sceneId], 当前玩家=${players.size}")
+      case bomb: Bomb =>
+        println(s"[Scene.onEnter] 炸弹[${bomb.id}]进入场景[$sceneId], 当前actor总数=${actors.size}")
       case _ =>
     }
   }
