@@ -116,8 +116,14 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
     val playerCount = scene.players.size
     println(s"[Bomb.explode] 向场景内${playerCount}名玩家广播BOMB_EXPLODE: bombId=[$id], pos=($bombX,$bombZ), grid=($centerGridX,$centerGridZ), radius=$radius, 摧毁障碍物=${affectedObstacles.size}个")
 
-    // 序列化障碍物网格列表（格式: "gx1,gz1;gx2,gz2;..."）
-    val obstacleList = affectedObstacles.map { case (gx, gz) => s"$gx,$gz" }.mkString(";")
+    // 序列化障碍物网格列表（嵌套 JSON: {"0":{"x":18,"y":18},"1":{"x":19,"y":19}}）
+    // 使用嵌套 MessageBody 避免字符串内分隔符与 JSON 解析器冲突
+    val obstaclesBody = new MessageBody()
+    var obsIdx = 0
+    affectedObstacles.foreach { case (gx, gz) =>
+      obstaclesBody.put(obsIdx.toString, MessageBody("x" -> gx.toString, "y" -> gz.toString))
+      obsIdx += 1
+    }
 
     scene.players.values.foreach { p =>
       PlayerChannels.send(p.id, Message(CmdType.BOMB_EXPLODE, MessageBody(
@@ -129,7 +135,7 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
         "gridX" -> centerGridX,
         "gridZ" -> centerGridZ,
         "radius" -> owner.attr.BombRadius,
-        "obstacles" -> obstacleList
+        "obstacles" -> obstaclesBody
       )))
     }
 

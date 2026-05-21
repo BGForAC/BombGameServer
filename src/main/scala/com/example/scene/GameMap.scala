@@ -118,14 +118,17 @@ class GameMap(scene: Scene) {
    * 将指定位置的可破坏方块标记为已摧毁（变为可通行）
    * @param gridX 网格X坐标（对应 3D X）
    * @param gridZ 网格Y坐标（对应 3D Z，参数名 gridZ 为历史遗留）
-   * @return 实际世界坐标 (x, y, z)，用于生成道具；如果未找到则返回None
+   * @return 实际世界坐标（服务端单位×100），用于生成道具；如果未找到则返回None
    */
   def destroyObstacleAt(gridX: Int, gridZ: Int): Option[(Int, Int, Int)] = {
     grids.get((gridX, gridZ)) match {
       case Some(node) if node.isObstacle =>
         node.isObstacle = false
-        // 返回世界坐标：格子坐标 * 250 为世界坐标（客户端 /100 后使用）
-        Some((gridX * 250, 0, gridZ * 250))
+        // 客户端世界坐标转换：worldX = gridX - offsetDistance + 0.5f
+        // 服务端坐标 = 客户端世界坐标 × 100（与客户端 /100 对齐）
+        val worldX = ((gridX - 15.0f + 0.5f) * 100).toInt
+        val worldZ = ((gridZ - 15.0f + 0.5f) * 100).toInt
+        Some((worldX, 0, worldZ))
       case _ => None
     }
   }
