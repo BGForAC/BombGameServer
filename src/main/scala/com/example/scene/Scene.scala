@@ -42,19 +42,34 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     // 遍历场景中的所有角色并调用其tick方法
     actors.values.foreach(actor => actor.tick(tickIdx))
 
-    // 每帧广播玩家状态同步（HP + 属性 + 位置），确保客户端及时反映服务端权威状态
+    // 每帧广播全量玩家状态同步（所有玩家的 HP + 属性 + 位置），确保客户端及时反映服务端权威状态
+    // 使用嵌套 MessageBody 一次性广播所有玩家数据，减少网络消息数量
     if (players.nonEmpty) {
+      val allPlayersBody = new MessageBody()
       players.values.foreach { p =>
         val info = p.movement.info
         if (!info.isEmpty) {
-          PlayerChannels.send(p.id, Message(CmdType.PLAYER_SYNC, MessageBody(
+          val playerBody = MessageBody(
             Seq(
               "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
               "level" -> p.attr.level, "exp" -> p.attr.exp,
-              "maxStamina" -> p.attr.maxStamina
+              "maxStamina" -> p.attr.maxStamina,
+              // 体力与速度（服务端权威）
+              "stamina" -> p.stamina,
+              "currentSpeed" -> p.currentSpeed,
+              "isStaminaEmpty" -> (if (p.isStaminaEmpty) 1 else 0),
+              // 炸弹状态（服务端权威）
+              "bombCount" -> (p.attr.MaxBombCount - p.bombNum),
+              "bombCooldown" -> (p.bombCooldownRemaining / 1000f),
+              "bombRecoveryTime" -> (p.bombRecoveryRemaining / 1000f),
+              "maxBombCount" -> p.attr.MaxBombCount
             ) ++ info: _*
-          )))
+          )
+          allPlayersBody.put(p.id, playerBody)
         }
+      }
+      if (!allPlayersBody.isEmpty) {
+        PlayerChannels.sendToAll(Message(CmdType.PLAYER_SYNC, MessageBody("players" -> allPlayersBody)))
       }
     }
 

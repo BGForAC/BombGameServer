@@ -19,5 +19,10 @@ object Command03 extends IPlayerCommand {
     val angle = message.getFloat("angle")    // 从消息中获取玩家的朝向角度
     val player = PlayerHolder.getPlayer(playerId)    // 根据玩家ID获取玩家对象
     player.movement.setPosition((x, y, z, angle))    // 更新玩家的位置信息，包括坐标和朝向角度
+
+    // 解析冲刺状态（客户端上报 LeftShift 是否按下，1=冲刺中, 0=未冲刺）
+    if (message.contains("sprinting")) {
+      player.isSprinting = message.getInt("sprinting") != 0
+    }
   }
 }

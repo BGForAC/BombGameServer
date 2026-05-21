@@ -23,14 +23,23 @@ class Player(pid: String) extends Actor(pid) {
   // 是否离线状态
   private var offLine: Boolean = false
 
-  // 当前拥有的炸弹数量
-  private var bombNum: Int = 0
+  // 当前拥有的炸弹数量（放置+1，恢复-1，供 Scene 读取）
+  var bombNum: Int = 0
 
   // 上次放置炸弹的时间戳
   private var lastPutBombTime: Long = 0
 
   // 上次恢复炸弹的时间戳
   private var lastRecoverBombTime: Long = 0
+
+  // ===== 体力系统（服务端权威） =====
+  var stamina: Float = 0f       // 当前体力值
+  var isSprinting: Boolean = false  // 是否正在冲刺（由客户端 MOVE 消息上报）
+  var isStaminaEmpty: Boolean = false  // 体力是否耗尽
+  private var lastStaminaTickTime: Long = 0L  // 上次体力 tick 的时间戳
+
+  // ===== 速度（服务端权威，由体力+冲刺状态决定） =====
+  var currentSpeed: Float = 0f  // 当前实际速度（= baseSpeed 或 baseSpeed * speedMultiplier）
 
   // 将玩家添加到玩家持有者中
   PlayerHolder.addPlayer(this)
@@ -56,7 +65,7 @@ class Player(pid: String) extends Actor(pid) {
   }
 
   /**
-   * 每个游戏周期的处理方法
+   * 每个游戏周期的处理方法（服务端权威的状态推进）
    * @param tickIdx 当前周期的索引
    */
   override def tick(tickIdx: Long): Unit = {
@@ -66,13 +75,60 @@ class Player(pid: String) extends Actor(pid) {
     if (offLine) {
       return
     }
-    // 如果玩家有炸弹且距离上次恢复炸弹的时间超过恢复间隔，则减少炸弹数量
-    if (bombNum > 0 && System.currentTimeMillis() - lastRecoverBombTime >= attr.BombRecoveryTime) {
-      // 减少炸弹数量
-      bombNum = bombNum - 1
-      // 更新上次恢复炸弹的时间戳
-      lastRecoverBombTime = System.currentTimeMillis()
+
+    val now = System.currentTimeMillis()
+
+    // 初始化时间戳（首次 tick）
+    if (lastStaminaTickTime == 0L) {
+      lastStaminaTickTime = now
+      stamina = attr.maxStamina.toFloat  // 初始满体力
+      currentSpeed = attr.speed.toFloat
     }
+
+    // ===== 体力系统 =====
+    val deltaSeconds = (now - lastStaminaTickTime) / 1000.0f
+    if (deltaSeconds > 0f && deltaSeconds < 1.0f) {  // 防止异常大 delta
+      if (isSprinting && stamina > 0 && !isStaminaEmpty) {
+        // 冲刺：消耗体力，速度 = baseSpeed * speedMultiplier
+        stamina = Math.max(0f, stamina - attr.staminaDrainRate * deltaSeconds)
+        currentSpeed = attr.speed.toFloat * attr.speedMultiplier
+        if (stamina <= 0f) {
+          isStaminaEmpty = true
+          currentSpeed = attr.speed.toFloat
+        }
+      } else {
+        // 未冲刺：恢复体力，速度 = baseSpeed
+        stamina = Math.min(attr.maxStamina.toFloat, stamina + attr.staminaRegenRate * deltaSeconds)
+        currentSpeed = attr.speed.toFloat
+        if (isStaminaEmpty && stamina > 20f) {
+          isStaminaEmpty = false
+        }
+      }
+    }
+    lastStaminaTickTime = now
+
+    // ===== 炸弹恢复（每 RecoveryTime 毫秒恢复一个炸弹槽位） =====
+    if (bombNum > 0 && now - lastRecoverBombTime >= attr.BombRecoveryTime) {
+      bombNum = bombNum - 1
+      lastRecoverBombTime = now
+    }
+  }
+
+  /**
+   * 获取炸弹放置冷却剩余时间（毫秒），供 PLAYER_SYNC 同步到客户端
+   */
+  def bombCooldownRemaining: Int = {
+    val elapsed = System.currentTimeMillis() - lastPutBombTime
+    Math.max(0, attr.Cooldown - elapsed.toInt)
+  }
+
+  /**
+   * 获取炸弹恢复剩余时间（毫秒），供 PLAYER_SYNC 同步到客户端
+   */
+  def bombRecoveryRemaining: Int = {
+    if (bombNum <= 0) return 0  // 无炸弹待恢复
+    val elapsed = System.currentTimeMillis() - lastRecoverBombTime
+    Math.max(0, attr.BombRecoveryTime - elapsed.toInt)
   }
 
 
