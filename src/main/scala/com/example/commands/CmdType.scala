@@ -48,10 +48,17 @@ object CmdType {
 
   // 炸弹相关命令
   val PUT_BOMB = 0x0501      // 放置炸弹命令
+  val BOMB_EXPLODE = 0x0502  // 炸弹爆炸命令（服务器→客户端广播）
   
 
 
 
   // 生命值相关命令
   val HP_CHANGE = 0x0601     // 生命值变化命令
+
+  // 道具系统相关命令
+  val PROP_SPAWN = 0x0801         // 道具生成命令（服务器→客户端）
+  val PROP_PICKED_UP = 0x0802     // 道具被拾取命令（客户端→服务器 / 服务器→客户端广播）
+  val PROP_EFFECT_ENABLE = 0x0803  // 道具效果启用命令（服务器→客户端）
+  val PROP_EFFECT_DISABLE = 0x0804 // 道具效果禁用命令（服务器→客户端）
 }

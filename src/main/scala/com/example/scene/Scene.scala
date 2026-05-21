@@ -1,6 +1,6 @@
 package com.example.scene
 
-import com.example.actor.{Actor, Player}
+import com.example.actor.{Actor, Bomb, Player}
 import com.example.commands.CmdType
 import com.example.config.SceneDef
 import com.example.exception.ThrowBusinessException
@@ -17,7 +17,7 @@ import scala.collection.mutable
  * @param sceneDef 场景的定义配置
  */
 abstract class Scene(sceneId: String, sceneDef: SceneDef) {
-  //private val map = new GameMap(this)
+  val map: GameMap = new GameMap(this)
 
   // 将当前场景添加到场景持有者中
   SceneHolder.addScene(this)
@@ -105,16 +105,42 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   }
 
   /**
+   * 根据ID查找场景中的Actor
+   * @param actorId Actor的唯一标识符
+   * @return 找到的Actor，如果不存在则返回null
+   */
+  def getActor(actorId: String): Actor = {
+    actors.getOrElse(actorId, null)
+  }
+
+  /**
+   * 获取场景中所有Actor（用于炸弹爆炸时查找范围内的其他炸弹）
+   */
+  def getAllActors: Iterable[Actor] = actors.values
+
+  /**
+   * 查找场景中指定格子坐标上的所有炸弹（用于连锁爆炸）
+   * @param gridX 网格X坐标（对应 3D X）
+   * @param gridZ 网格Y坐标（对应 3D Z，参数名 gridZ 为历史遗留）
+   */
+  def getBombsAtGrid(gridX: Int, gridZ: Int, gridSize: Int = 100, offsetDistance: Int = 15): List[Bomb] = {
+    actors.values.collect {
+      case bomb: Bomb if Math.floor(bomb.movement.info.getInt("x").toDouble / gridSize).toInt + offsetDistance == gridX &&
+                        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
+        bomb
+    }.toList
+  }
+
+  /**
    * 检查指定坐标点是否可通行
-   * @param x X坐标
-   * @param y Y坐标
-   * @param z Z坐标
+   * 服务端坐标单位为世界坐标×100；映射关系：server(x) = 3D X, server(z) = 3D Z, server(y) = 高度
+   * @param x 服务端X坐标（世界坐标×100，对应 3D X）
+   * @param y 服务端Y坐标（高度）
+   * @param z 服务端Z坐标（世界坐标×100，对应 3D Z）
    * @return 是否可通行
    */
   def walkable(x: Int, y: Int, z: Int): Boolean = {
-    true
-    // 注释掉的代码可能是用于检查地图上某点是否可通行
-    //map.walkable(x, y, z)
+    map.walkable(x, y, z)
   }
 }
 

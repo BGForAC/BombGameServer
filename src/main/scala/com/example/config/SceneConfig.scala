@@ -30,6 +30,8 @@ object SceneConfig extends IConfig {
     // 设置地图ID
     sceneDef.mapId = "map_01"
     // 设置出生点坐标和朝向，共4个位置
+    // 坐标格式: (3D_X×100, 高度×100, 3D_Z×100, 朝向角度)
+    // 经 walkable 转换为网格坐标: floor(x/100)+offsetDistance = floor(-1250/100)+15 = 2
     sceneDef.spawnPoints = Array(
       (-1250, 40, -1250, 45f),
       (1250, 40, -1250, 135f),
@@ -94,7 +96,7 @@ class SceneDef {
   var typ: Int = _
   // 场景名称
   var name: String = _
-  // 出生点数组，每个元素是一个元组，包含x、y、z坐标和朝向角度
+  // 出生点数组，每个元素是一个元组，包含x（3D X × 100）、y（高度×100）、z（3D Z × 100）和朝向角度
   var spawnPoints: Array[(Int, Int, Int, Float)] = _
   // 最大玩家数量
   var maxPlayerCnt: Int = _

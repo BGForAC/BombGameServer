@@ -147,6 +147,11 @@ class Message(cmdTyp: Int,private var body: MessageBody) {
    * @return 返回 MessageBody 对象
    */
   def getBody: MessageBody = body
+
+  /**
+   * 检查消息体中是否包含指定键
+   */
+  def contains(key: String): Boolean = body.contains(key)
 }
 
 /**
@@ -245,11 +250,13 @@ object MessageBody {
 
   // 数据是json类型的字符串，只有字符串或json类型的value
   def fromJson(jsonString: String): MessageBody = {
-    if (!jsonString.startsWith("{") || !jsonString.endsWith("}")) {
+    // 去除 UTF-8 BOM (\uFEFF) 和首尾空白字符（换行、空格等）
+    val cleaned = jsonString.stripPrefix("\uFEFF").trim
+    if (!cleaned.startsWith("{") || !cleaned.endsWith("}")) {
       throw new RuntimeException(s"无效的消息体格式：$jsonString")
     }
     val mb = new MessageBody
-    var content = jsonString.substring(1, jsonString.length - 1).trim
+    var content = cleaned.substring(1, cleaned.length - 1).trim
     if (content.isEmpty) {
       return mb
     }
@@ -307,6 +314,26 @@ object MessageBody {
  * 使用键值对存储消息数据
  */
 class MessageBody extends mutable.HashMap[String, Any] {
+  /**
+   * 从消息体中获取字符串值（兼容 Int/Float 等类型，统一 toString 转换）
+   */
+  def getString(key: String): String = getOrElse(key, "").toString
+
+  /**
+   * 从消息体中获取整数值（兼容字符串和数字类型）
+   */
+  def getInt(key: String): Int = getOrElse(key, "0").toString.toFloat.toInt
+
+  /**
+   * 从消息体中获取浮点数值（兼容字符串和数字类型）
+   */
+  def getFloat(key: String): Float = getOrElse(key, "0").toString.toFloat
+
+  /**
+   * 从消息体中获取布尔值
+   */
+  def getBoolean(key: String): Boolean = getOrElse(key, "false").toString.toBoolean
+
   /**
    * 将消息体转换为字节数组
    * 现在改为转为json类型的string

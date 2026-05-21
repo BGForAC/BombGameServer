@@ -1,7 +1,7 @@
 package com.example.commands
 
 import com.example.holder.{PlayerHolder, SceneHolder}
-import com.example.message.Message
+import com.example.message.{Message, MessageBody}
 import com.example.serer.PlayerChannels
 
 /**
@@ -11,26 +11,38 @@ object Command05 extends IPlayerCommand {
   /**
    * handler01 方法处理玩家放置炸弹的逻辑
    * @param playerId 玩家的唯一标识符
-   * @param message 包含命令信息的消息对象
+   * @param message 包含命令信息的消息对象（客户端可附带位置坐标 x, y, z）
    */
   def handler01(playerId: String, message: Message): Unit = {
     // 从 PlayerHolder 中获取玩家对象
     val player = PlayerHolder.getPlayer(playerId)
-    // 调用玩家对象的 putBomb 方法放置炸弹
-    var bomb = player.putBomb()
+    if (player == null) return
 
-    var bombInfo = player.putBomb().BombInfo(player.baseInfo)
+    // 调用玩家对象的 putBomb 方法放置炸弹（只调用一次，修复双重放置 Bug）
+    val bomb = player.putBomb()
 
+    // 客户端可能上报了炸弹位置（在线模式下坐标×100）
+    val bombX = if (message.contains("x")) message.getInt("x") else player.movement.info.getInt("x")
+    val bombY = if (message.contains("y")) message.getInt("y") else 0
+    val bombZ = if (message.contains("z")) message.getInt("z") else player.movement.info.getInt("z")
 
+    // 设置炸弹位置（与客户端 Mathf.Ceil(x) - 0.5f 对齐：gridCell * 250 = worldPos）
+    bomb.movement.setPosition((bombX, bombY, bombZ, 0f), checkMove = false)
+    // 防止炸弹位置被 map.walkable 拒绝（炸弹可以放在任何可行走位置）
 
-    // 获取玩家所在的场景ID
+    // 将炸弹位置信息同步到所有玩家（包含炸弹 ID 和爆炸时间，客户端据此独立计时）
     val sceneId = player.movement.sceneId
-    // 从 SceneHolder 中获取场景对象
     val scene = SceneHolder.getScene(sceneId)
-    // 向场景中所有玩家广播放置炸弹的消息
-    scene.players.foreach { case (_, p) =>
-      // 使用 PlayerChannels 发送消息，通知其他玩家有玩家放置了炸弹
-      PlayerChannels.send(p.id, Message(CmdType.PUT_BOMB, (player.baseInfo)))
+    if (scene != null) {
+      scene.players.foreach { case (_, p) =>
+        PlayerChannels.send(p.id, Message(CmdType.PUT_BOMB, MessageBody(
+          "id" -> player.id,
+          "bombId" -> bomb.id,
+          "x" -> bombX,
+          "y" -> bombY,
+          "z" -> bombZ
+        )))
+      }
     }
   }
 }
