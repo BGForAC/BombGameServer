@@ -20,6 +20,8 @@ object BaseGameRoomHolder extends ITick {
   private val playerId2Room: mutable.Map[String, Room] = mutable.Map.empty
   // 房间ID到房间的映射
   private val rooms: mutable.Map[Int, Room] = mutable.Map.empty
+  // 场景ID到房间的映射（用于游戏结束时自动返回房间）
+  private val sceneToRoom: mutable.Map[String, Room] = mutable.Map.empty
   // 下次更新时间
   private var nextUpdateTime = 0L
 
@@ -37,6 +39,32 @@ object BaseGameRoomHolder extends ITick {
       nextUpdateTime = System.currentTimeMillis() + 5000 // 设置下次更新时间为当前时间+5秒
       println(s"[Tick] 广播房间信息给所有玩家，当前房间总数: ${rooms.size}")
       PlayerChannels.sendToAll(roomMessage) // 向所有玩家广播房间信息
+    }
+  }
+
+  /**
+   * 注册场景与房间的关联关系（游戏开始时调用）
+   * @param sceneId 场景ID
+   * @param room 房间实例
+   */
+  private[holder] def registerSceneRoom(sceneId: String, room: Room): Unit = {
+    sceneToRoom += (sceneId -> room)
+    println(s"[SceneRoomMap] 场景[$sceneId] 关联到房间[${room.id}]")
+  }
+
+  /**
+   * 游戏结束时处理房间返回逻辑
+   * @param sceneId 场景ID
+   * @param isRandomMatch 是否为随机匹配模式
+   */
+  def onGameOver(sceneId: String, isRandomMatch: Boolean): Unit = {
+    sceneToRoom.get(sceneId) match {
+      case Some(room) =>
+        println(s"[GameOver] 场景[$sceneId] 属于房间[${room.id}]，自动返回房间")
+        room.onGameReturn()
+        sceneToRoom -= sceneId
+      case None =>
+        println(s"[GameOver] 场景[$sceneId] 无关联房间（随机匹配），跳过房间返回")
     }
   }
 
@@ -294,6 +322,9 @@ object BaseGameRoomHolder extends ITick {
   private class RoomMember(val id: String, room: Room) {
     var isReady = false // 准备状态
     val player = PlayerHolder.getPlayer(id) // 获取玩家对象
+    if (player == null) {
+      throw new RuntimeException(s"玩家 $id 未登录或已离线，无法加入房间")
+    }
     player.career = "Balance" // 默认职业
 
     /**
@@ -360,7 +391,8 @@ object BaseGameRoomHolder extends ITick {
      */
     private def setLeader(leaderId: String) = {
       this.leaderId = leaderId
-      leaderName = PlayerHolder.getPlayer(leaderId).uname // 获取房主名称
+      val leaderPlayer = PlayerHolder.getPlayer(leaderId)
+      leaderName = if (leaderPlayer != null) leaderPlayer.uname else "未知" // 获取房主名称
     }
 
     /**
@@ -400,6 +432,11 @@ object BaseGameRoomHolder extends ITick {
      * @param playerId 玩家ID
      */
     def addMember(playerId: String): Unit = {
+      // 检查玩家是否在线
+      if (!PlayerHolder.isOnline(playerId)) {
+        println(s"[AddMember] 失败: 玩家 $playerId 不在线")
+        ThrowBusinessException("玩家未登录或已离线")
+      }
       // 检查房间是否已满
       if (roomMember.size >= roomSize) {
         println(s"[AddMember] 失败: 房间 $id 人数已满 (${roomMember.size}/$roomSize)")
@@ -505,6 +542,22 @@ object BaseGameRoomHolder extends ITick {
       notifyRoomChange() // 通知房间状态变化
     }
 
+    /**
+     * 游戏结束时重置房间状态（自动返回房间）
+     */
+    def onGameReturn(): Unit = {
+      isStartGame = false
+      // 重置所有成员的准备状态
+      roomMember.values.foreach(_.isReady = false)
+      println(s"[Room.onGameReturn] 房间[$id] 游戏结束, 重置准备状态, 通知成员返回房间")
+      // 通知房间成员状态变化
+      notifyRoomChange()
+      // 向每个成员发送房间信息
+      roomMember.keys.foreach { playerId =>
+        BaseGameRoomHolder.refreshRoomInfo(playerId)
+      }
+    }
+
     def startGame(): Unit = {
       //验证玩家是否都准备
       roomMember.values.foreach( roomMember =>{
@@ -560,6 +613,9 @@ object BaseGameRoomHolder extends ITick {
       // 创建游戏场景
       val scene = SceneHolder.createScene(actualMapId)
 
+      // 注册场景与房间的关联（用于游戏结束时自动返回房间）
+      BaseGameRoomHolder.registerSceneRoom(scene.id, this)
+
       // 将玩家加入场景
       players.foreach { case (_, player) =>
         SceneHolder.enterScene(scene.id, player)
@@ -588,7 +644,7 @@ object BaseGameRoomHolder extends ITick {
       // 发送进入游戏场景的消息给所有玩家
       players.foreach { case (_, player) =>
         PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(
-          "mapId" -> actualMapId, "playersInfo" -> playersInfo)))
+          "mapId" -> actualMapId, "playersInfo" -> playersInfo, "isRandomMatch" -> 0)))
       }
 
       // 打印游戏启动成功信息

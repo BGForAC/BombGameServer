@@ -43,6 +43,7 @@ object CmdType {
   val BASE_GAME_MAP_CHANGE = 0x040E        // 更改地图命令
   val BASE_GAME_PLAYER_SEND_MESSAGE = 0x040F // 发送消息命令
   val BASE_GAME_START_GAME = 0x0410        // 开始游戏命令
+  val GAME_OVER = 0x0411                   // 游戏结束命令（服务器→客户端广播）
 
 //BaseGameStartMatch
 

@@ -14,6 +14,9 @@ class Player(pid: String) extends Actor(pid) {
   // 玩家用户名
   var uname: String = _
 
+  // 玩家密码（仅在登录时使用，不随游戏状态同步）
+  var password: String = _
+
   // 玩家职业
   var career: String = _
 
@@ -58,10 +61,12 @@ class Player(pid: String) extends Actor(pid) {
     if (curScene != null) {
       curScene.onExit(this)
     }
-    // 从玩家持有者中移除玩家
-    PlayerHolder.removePlayer(pid)
-    // 从玩家通道中移除玩家
-    PlayerChannels.removeChannel(pid)
+    // 只有当玩家没有任何活跃通道时才从 PlayerHolder 移除
+    // 避免顶号登录时新通道已建立，但旧通道的断开事件误删 PlayerHolder 中的玩家数据
+    if (!PlayerChannels.hasChannel(pid)) {
+      PlayerHolder.removePlayer(pid)
+      PlayerChannels.removeChannel(pid)
+    }
   }
 
   /**

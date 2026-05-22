@@ -33,6 +33,30 @@ object PlayerChannels extends ITick {
   }
 
   /**
+   * 检查指定玩家是否拥有活跃通道（用于防止顶号登录时误删 PlayerHolder）
+   * @param playerId 玩家ID
+   * @return 如果玩家拥有活跃通道返回 true
+   */
+  def hasChannel(playerId: String): Boolean = {
+    channels.contains(playerId)
+  }
+
+  /**
+   * 关闭并移除指定玩家的旧通道（用于玩家重新登录时注销原连接）
+   * @param playerId 玩家ID
+   */
+  def closeAndRemoveChannel(playerId: String): Unit = {
+    channels.get(playerId) match {
+      case Some(ctx) =>
+        // 先发送 LOGOUT 消息通知客户端
+        ctx.writeAndFlush(Message(CmdType.LOGOUT, MessageBody()))
+        ctx.close()
+        channels -= playerId
+      case None => // 无旧通道，无需处理
+    }
+  }
+
+  /**
    * 向指定玩家发送消息
    * @param playerId 目标玩家ID
    * @param msg 要发送的消息对象
@@ -111,10 +135,10 @@ object PlayerChannels extends ITick {
         if (currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 15000) {
           // TODO: 超时处理
           println(s"[Heartbeat]玩家 $playerId 超时，断开连接")
-/*          // 调用玩家的断开连接处理逻辑
-          PlayerHolder.getPlayer(playerId).onDisConnect()
-          // 关闭该玩家的网络连接
-          ctx.close()*/
+          /*          // 调用玩家的断开连接处理逻辑
+                    PlayerHolder.getPlayer(playerId).onDisConnect()
+                    // 关闭该玩家的网络连接
+                    ctx.close()*/
         }
       })
       lastHeartbeatTime = currentTime

@@ -28,6 +28,11 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   // 存储场景中所有玩家的可变映射表
   val players: mutable.Map[String, Player] = mutable.Map()
 
+  // 游戏是否已结束（防止重复触发）
+  var isGameOver: Boolean = false
+  // 是否为随机匹配模式（非房间创建）
+  var isRandomMatch: Boolean = false
+
   // 获取场景ID
   def id: String = sceneId
 
@@ -81,6 +86,25 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
           s"${p.id}:HP=${p.attr.hp}/${p.attr.maxHp} Lv.${p.attr.level} Exp=${p.attr.exp}"
         ).mkString(", ")
         println(s"[Scene.tick] tick#$tickIdx 场景[$sceneId]: 总actor=${actors.size}, 炸弹=$bombCount, 玩家=${players.size} [$hpInfo]")
+      }
+    }
+
+    // 游戏结束检测：存活玩家 ≤ 1 时判定游戏结束（需要至少2名玩家才开始检测）
+    if (!isGameOver && players.size > 1) {
+      val aliveCount = players.values.count(_.attr.hp > 0)
+      if (aliveCount <= 1) {
+        isGameOver = true
+        val winnerId = if (aliveCount == 1) players.values.find(_.attr.hp > 0).map(_.id).orNull else null
+        println(s"[Scene.GameOver] 场景[$sceneId] 游戏结束, 存活玩家=$aliveCount, 胜者=$winnerId, 随机匹配=$isRandomMatch")
+        // 向所有玩家广播游戏结束消息
+        players.values.foreach { p =>
+          PlayerChannels.send(p.id, Message(CmdType.GAME_OVER, MessageBody(
+            "winnerId" -> (if (winnerId != null) winnerId else ""),
+            "isRandomMatch" -> (if (isRandomMatch) 1 else 0)
+          )))
+        }
+        // 通知房间处理器游戏结束（房间模式下自动返回房间）
+        com.example.holder.BaseGameRoomHolder.onGameOver(sceneId, isRandomMatch)
       }
     }
   }

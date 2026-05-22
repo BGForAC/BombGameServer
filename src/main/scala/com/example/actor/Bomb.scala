@@ -25,13 +25,20 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
    * @param tickIdx 当前tick的索引
    */
   override def tick(tickIdx: Long): Unit = {
+    if (isExploded) return  // 已爆炸，跳过
+
+    val now = System.currentTimeMillis()
+    val remaining = explodeTime - now
+
+    // 每60 tick输出一次调试信息，确认炸弹tick被正常调用
+    if (tickIdx % 60 == 0 || remaining <= 0) {
+      println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id] sceneId=[${movement.sceneId}] owner=[${owner.id}] remaining=${remaining}ms explodeTime=$explodeTime now=$now")
+    }
+
     // 检查是否到达爆炸时间
-    if (!isExploded && System.currentTimeMillis() >= explodeTime) {
-      val remaining = explodeTime - System.currentTimeMillis()
+    if (now >= explodeTime) {
       println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id]到达爆炸时间 (延迟${-remaining}ms), 执行explode()")
-      explode() // 执行爆炸
-      // 从场景中移除炸弹
-      SceneHolder.exitScene(this.movement.sceneId, this)
+      explode() // 执行爆炸（explode 内部会调用 exitScene 移除自身）
     }
   }
 
@@ -42,6 +49,7 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
    * 3. 摧毁可破坏方块并生成道具，更新服务端地图
    * 4. 触发其他炸弹连锁爆炸
    * 5. 广播 BOMB_EXPLODE 通知客户端播放视觉效果
+   * 6. 从场景中移除此炸弹（无论通过 tick 还是连锁引爆触发）
    */
   def explode(): Unit = {
     if (isExploded) return
@@ -141,6 +149,17 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
 
     val chainCount = affectedBombs.size - 1
     println(s"[Bomb.explode] ===== 炸弹[$id]爆炸完成: 伤害${affectedPlayers.size}名玩家, 摧毁${affectedObstacles.size}个方块, 连锁引爆${chainCount}个炸弹 =====")
+
+    // ===== 5. 从场景中移除此炸弹（无论通过 tick 还是连锁引爆触发，都必须移除） =====
+    // 修复：原来 exitScene 只在 tick() 中调用，连锁引爆的炸弹永远不会从 actors 中移除
+    val sceneId = this.movement.sceneId
+    if (sceneId != null) {
+      println(s"[Bomb.explode] 炸弹[$id]开始从场景[$sceneId]移除")
+      SceneHolder.exitScene(sceneId, this)
+      println(s"[Bomb.explode] 炸弹[$id]已从场景移除")
+    } else {
+      println(s"[Bomb.explode] 警告: 炸弹[$id] sceneId 为 null，无法从场景移除")
+    }
   }
 
   /**

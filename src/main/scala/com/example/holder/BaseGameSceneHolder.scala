@@ -136,6 +136,8 @@ object BaseGameSceneHolder extends ITick {
             } else mapId // 否则使用指定的地图ID
             // 创建游戏场景
             val scene = SceneHolder.createScene(actualMapId)
+            // 标记为随机匹配模式
+            scene.isRandomMatch = true
             // 将玩家加入场景
             players.foreach { case (_, player) =>
               SceneHolder.enterScene(scene.id, player)
@@ -163,7 +165,7 @@ object BaseGameSceneHolder extends ITick {
             // 发送进入游戏场景的消息给所有玩家
             players.foreach { case (_, player) =>
               PlayerChannels.send(player.id, Message(CmdType.ENTER_BASE_GAME, MessageBody(
-                "mapId" -> actualMapId, "playersInfo" -> playersInfo)))
+                "mapId" -> actualMapId, "playersInfo" -> playersInfo, "isRandomMatch" -> 1)))
             }
 
             // 打印匹配成功信息

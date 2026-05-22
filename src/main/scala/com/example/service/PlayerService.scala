@@ -2,6 +2,7 @@ package com.example.service
 
 import com.example.actor.Player
 import com.example.exception.ThrowBusinessException
+import com.example.serer.PlayerChannels
 
 import scala.collection.mutable
 import scala.util.Random
@@ -15,32 +16,35 @@ object PlayerService {
   private val playerMap: mutable.Map[String, Player] = mutable.Map.empty
 
   /**
-   * 获取玩家方法
+   * 获取或验证玩家
+   * 先检查用户名是否存在：存在则验证密码，不存在则创建新玩家
    * @param username 用户名
    * @param password 密码
    * @return Player 玩家对象
    */
   def getPlayer(username: String, password: String): Player = {
-    // 创建新玩家并生成唯一ID
-    var pid = generatePlayerId()
-    while (playerMap.keySet.contains(pid)){
-      pid = generatePlayerId()
+    // 检查用户名是否已存在
+    playerMap.values.find(p => p.uname == username) match {
+      case Some(existingPlayer) =>
+        // 用户名存在，验证密码
+        if (existingPlayer.password != password) {
+          ThrowBusinessException("密码错误")
+        }
+        // 玩家重新登录：关闭原通道，注销旧连接
+        PlayerChannels.closeAndRemoveChannel(existingPlayer.id)
+        existingPlayer
+      case None =>
+        // 用户名不存在，创建新玩家
+        var pid = generatePlayerId()
+        while (playerMap.keySet.contains(pid)) {
+          pid = generatePlayerId()
+        }
+        val player = new Player(pid)
+        player.uname = username
+        player.password = password
+        playerMap += (player.id -> player)
+        player
     }
-    val player = new Player(pid)
-    // 设置玩家用户名
-    player.uname = username
-    // 以下是检查用户名是否存在的代码（已被注释）
-    if (playerMap.values.exists(p => p.uname == username)) {
-      ThrowBusinessException("用户名已存在")
-    }
-    // 检查玩家ID是否已存在
-//    if (playerMap.keySet.contains(player.id)) {
-//      ThrowBusinessException("玩家ID已存在")
-//    }
-    // 将新玩家添加到玩家Map中
-    playerMap += (player.id -> player)
-    // 返回创建的玩家对象
-    player
   }
 
   def getPlayerName(pid : String): String = {
