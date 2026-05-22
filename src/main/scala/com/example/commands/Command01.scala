@@ -35,6 +35,9 @@ object Command01 extends ISystemCommand {
     ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).set(System.currentTimeMillis() + 10000)
     // 将通道添加到PlayerChannels中管理
     PlayerChannels.addChannel(playerId, ctx)
+    // 顶号登录：旧通道异步断开时会设置 offLine = true，此处重置为 false
+    // 确保玩家重连后 tick() 中的体力/速度计算正常运行
+    player.offLine = false
     // 返回成功响应，包含玩家ID
     ctx.writeAndFlush(message.response(MessageBody("result" -> "success", "playerId" -> playerId)))
     // 打印连接信息

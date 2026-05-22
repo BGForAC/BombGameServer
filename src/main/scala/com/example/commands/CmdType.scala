@@ -56,7 +56,7 @@ object CmdType {
 
   // 生命值相关命令
   val HP_CHANGE = 0x0601     // 生命值变化命令
-  val PLAYER_SYNC = 0x0602   // 玩家状态同步命令（每帧广播HP+位置）
+  val PLAYER_SYNC = 0x0602   // 玩家状态同步命令（每帧广播+位置）
 
   // 道具系统相关命令
   val PROP_SPAWN = 0x0801         // 道具生成命令（服务器→客户端）

@@ -53,7 +53,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
       val allPlayersBody = new MessageBody()
       players.values.foreach { p =>
         val info = p.movement.info
-        if (!info.isEmpty) {
+        if (info.nonEmpty) {
           val playerBody = MessageBody(
             Seq(
               "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
@@ -73,7 +73,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
           allPlayersBody.put(p.id, playerBody)
         }
       }
-      if (!allPlayersBody.isEmpty) {
+      if (allPlayersBody.nonEmpty) {
         PlayerChannels.sendToAll(Message(CmdType.PLAYER_SYNC, MessageBody("players" -> allPlayersBody)))
       }
     }
@@ -105,6 +105,15 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
         }
         // 通知房间处理器游戏结束（房间模式下自动返回房间）
         com.example.holder.BaseGameRoomHolder.onGameOver(sceneId, isRandomMatch)
+
+        // 清退所有玩家：从场景数据结构中移除，清理 actor 的场景引用
+        // 不调用 onExit（避免广播无意义的 EXIT_SCENE），直接清理内部映射
+        players.values.foreach { player =>
+          actors -= player.id
+          player.setOutScene(this)
+        }
+        players.clear()
+        println(s"[Scene.GameOver] 场景[$sceneId] 已清退所有玩家，剩余actor=${actors.size}")
       }
     }
   }
@@ -195,7 +204,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def getBombsAtGrid(gridX: Int, gridZ: Int, gridSize: Int = 100, offsetDistance: Int = 15): List[Bomb] = {
     actors.values.collect {
       case bomb: Bomb if Math.floor(bomb.movement.info.getInt("x").toDouble / gridSize).toInt + offsetDistance == gridX &&
-                        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
+        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
         bomb
     }.toList
   }

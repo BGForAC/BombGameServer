@@ -23,8 +23,8 @@ class Player(pid: String) extends Actor(pid) {
   // 控制配置
   var controlConfig: Int = _
 
-  // 是否离线状态
-  private var offLine: Boolean = false
+  // 是否离线状态（非 private，顶号登录时由 Command01 重置为 false）
+  var offLine: Boolean = false
 
   // 当前拥有的炸弹数量（放置+1，恢复-1，供 Scene 读取）
   var bombNum: Int = 0
@@ -53,7 +53,9 @@ class Player(pid: String) extends Actor(pid) {
    */
   def onDisConnect(): Unit = {
     // 设置玩家为离线状态
-    offLine = true
+    // 顶号登录保护：只有当玩家没有任何活跃通道时才标记离线
+    // 旧通道异步断开时，新通道可能已建立（hasChannel 为 true），此时不应标记离线
+    offLine = !PlayerChannels.hasChannel(pid)
     // 现在的设计是玩家断线了直接删了，后续可以改成离线状态，等玩家重连了再把数据加载回来, 倘若玩家长时间不重连了，才把数据删了
     // 获取玩家当前所在场景
     val curScene = SceneHolder.getScene(movement.sceneId)

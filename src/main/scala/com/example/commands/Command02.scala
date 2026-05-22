@@ -10,6 +10,7 @@ import com.example.message.Message
  */
 object Command02 extends IPlayerCommand {
   /**
+   * ENTER_SCENE = 0x0201  进入场景命令
    * 处理玩家进入场景的方法
    * @param playerId 玩家的唯一标识符
    * @param message 包含场景ID等信息的消息对象
