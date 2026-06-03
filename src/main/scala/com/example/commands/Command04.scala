@@ -17,15 +17,31 @@ object Command04 extends IPlayerCommand {
     player.career = career
     player.controlConfig = controlConfig
     BaseGameSceneHolder.addToMatchQueue(playerId, mapId)
+    PlayerChannels.info(playerId, "已加入匹配队列，等待其他玩家...")
   }
 
   def handler02(playerId: String, message: Message): Unit = {
     BaseGameSceneHolder.removeFromMatchQueue(playerId)
+    PlayerChannels.info(playerId, "已取消匹配")
   }
 
   def handler04(playerId: String, message: Message): Unit = {
     val roomName: String = message.getString("roomName")
+    val mapIndex: Int = message.getInt("mapIndex")
+    val career: String = message.getString("career")
+    val controlConfig: Int = message.getInt("controlConfig")
+    
     BaseGameRoomHolder.createRoom(playerId, roomName)
+    
+    // 应用创建房间时的设置（地图、职业、控制配置），确保进入房间后显示一致
+    val player = PlayerHolder.getPlayer(playerId)
+    player.controlConfig = controlConfig
+    BaseGameRoomHolder.changeMap(playerId, mapIndex)
+    if (career.nonEmpty) {
+      BaseGameRoomHolder.changeCareer(playerId, career)
+    }
+    
+    PlayerChannels.info(playerId, s"房间[$roomName]创建成功")
   }
 
   def handler05(playerId: String, message: Message): Unit = {
@@ -35,6 +51,7 @@ object Command04 extends IPlayerCommand {
 
   def handler06(playerId: String, message: Message): Unit = {
     BaseGameRoomHolder.leaveRoom(playerId)
+    PlayerChannels.info(playerId, "已离开房间")
   }
 
   def handler08(playerId: String, message: Message): Unit = {
@@ -51,6 +68,7 @@ object Command04 extends IPlayerCommand {
 
   def handler0A(playerId: String, message: Message): Unit = {
     BaseGameRoomHolder.reqRemoveRoom(playerId)
+    PlayerChannels.info(playerId, "房间已解散")
   }
 
   def handler0B(playerId: String, message: Message): Unit = {

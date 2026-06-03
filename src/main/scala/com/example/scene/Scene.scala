@@ -53,11 +53,12 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
       val allPlayersBody = new MessageBody()
       players.values.foreach { p =>
         val info = p.movement.info
-        if (info.nonEmpty) {
+        if (!info.isEmpty) {
           val playerBody = MessageBody(
             Seq(
               "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
               "level" -> p.attr.level, "exp" -> p.attr.exp,
+              "maxExpToLevelUp" -> p.attr.maxExpToLevelUp,
               "maxStamina" -> p.attr.maxStamina,
               // 体力与速度（服务端权威）
               "stamina" -> p.stamina,
@@ -73,7 +74,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
           allPlayersBody.put(p.id, playerBody)
         }
       }
-      if (allPlayersBody.nonEmpty) {
+      if (!allPlayersBody.isEmpty) {
         PlayerChannels.sendToAll(Message(CmdType.PLAYER_SYNC, MessageBody("players" -> allPlayersBody)))
       }
     }
@@ -127,10 +128,6 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     actors += (actor.id -> actor)
     // 设置角色的当前场景
     actor.setToScene(this)
-    // 通知场景中的所有玩家有新角色进入
-    players.values.foreach{ player =>
-      PlayerChannels.send(player.id, Message(CmdType.ENTER_SCENE, MessageBody(Seq("pid" -> actor.id) ++ actor.movement.info: _*)))
-    }
     // 如果进入的是玩家，则添加到玩家列表
     actor match {
       case player: Player =>
@@ -168,10 +165,6 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def onExit(actor: Actor): Unit = {
     // 从场景中移除角色
     actors -= actor.id
-    // 通知场景中的所有玩家有角色离开
-    players.values.foreach{ player =>
-      PlayerChannels.send(player.id, new Message(CmdType.EXIT_SCENE, MessageBody("aid" -> actor.id)))
-    }
     // 如果离开的是玩家，则从玩家列表中移除
     actor match {
       case player: Player =>
@@ -204,7 +197,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def getBombsAtGrid(gridX: Int, gridZ: Int, gridSize: Int = 100, offsetDistance: Int = 15): List[Bomb] = {
     actors.values.collect {
       case bomb: Bomb if Math.floor(bomb.movement.info.getInt("x").toDouble / gridSize).toInt + offsetDistance == gridX &&
-        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
+                        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
         bomb
     }.toList
   }

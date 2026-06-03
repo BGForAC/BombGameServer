@@ -120,6 +120,52 @@ class BaseAttr(owner: Actor) {
         this
     }
   }
+
+  /**
+   * 增加经验值，返回是否触发升级
+   * @param amount 经验值增量
+   * @return true 表示触发了升级，false 表示未触发
+   */
+  def addExp(amount: Int): Boolean = {
+    if (level >= maxLevel) {
+      // 等级已满，经验值封顶
+      exp = Math.min(exp + amount, maxExpToLevelUp)
+      return false
+    }
+    exp += amount
+    if (exp >= maxExpToLevelUp) {
+      levelUp()
+      return true
+    }
+    false
+  }
+
+  /**
+   * 升级：消耗经验值、增加等级、应用成长属性
+   */
+  private def levelUp(): Unit = {
+    exp -= maxExpToLevelUp
+    level += 1
+
+    // 基础属性成长
+    maxHp += maxHpGrowth
+    hp = maxHp  // 升级回满血
+    speed += speedGrowth.toInt
+    maxStamina += staminaGrowth
+
+    // 炸弹属性成长
+    maxBombCount += maxBombCountGrowth
+    bombDamage += bombDamageGrowth
+    bombRadius += bombRadiusGrowth
+    bombFuseTime = Math.max(0.1f, bombFuseTime - bombFuseTimeGrowth)
+    bombCooldown = Math.max(0.1f, bombCooldown - bombCooldownGrowth)
+    bombRecoveryTime = Math.max(0.5f, bombRecoveryTime - bombRecoveryTimeGrowth)
+
+    println(s"[LevelUp] 角色[${owner.id}] 升级: Lv.${level - 1} → Lv.$level, " +
+      s"exp=$exp/$maxExpToLevelUp, maxHp=$maxHp, speed=$speed, maxStamina=$maxStamina, " +
+      s"bombCount=$maxBombCount, bombDamage=$bombDamage, bombRadius=$bombRadius, " +
+      s"bombFuseTime=$bombFuseTime, bombCooldown=$bombCooldown, bombRecoveryTime=$bombRecoveryTime")
+  }
 }
 
 /**

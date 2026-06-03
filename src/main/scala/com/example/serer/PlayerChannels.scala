@@ -135,10 +135,10 @@ object PlayerChannels extends ITick {
         if (currentTime - ctx.channel().attr(MasterHandler.ATTR_HEARTBEAT).get() > 15000) {
           // TODO: 超时处理
           println(s"[Heartbeat]玩家 $playerId 超时，断开连接")
-          /*          // 调用玩家的断开连接处理逻辑
-                    PlayerHolder.getPlayer(playerId).onDisConnect()
-                    // 关闭该玩家的网络连接
-                    ctx.close()*/
+/*          // 调用玩家的断开连接处理逻辑
+          PlayerHolder.getPlayer(playerId).onDisConnect()
+          // 关闭该玩家的网络连接
+          ctx.close()*/
         }
       })
       lastHeartbeatTime = currentTime

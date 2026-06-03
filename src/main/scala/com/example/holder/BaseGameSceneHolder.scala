@@ -20,7 +20,7 @@ object BaseGameSceneHolder extends ITick {
 
   private val matchQueues: mutable.Map[Int, MatchQueue] = mutable.Map.empty // 存储地图ID与对应匹配队列的映射关系
 
-  private val minRoomSize = 1 // 最小房间人数，即开始游戏的最低人数要求
+  private val minRoomSize = 2 // 最小房间人数，即开始游戏的最低人数要求
   private val maxRoomSize = 4 // 最大房间人数，即每个房间的最大容量
   private val tickInterval = 50 // 定时器间隔，用于定期检查匹配情况
   private val mapCnt = 1 // 地图数量，表示可用的地图总数

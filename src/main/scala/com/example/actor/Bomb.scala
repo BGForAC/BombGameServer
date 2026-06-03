@@ -89,13 +89,16 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
 
     // ===== 1. 对范围内的玩家造成伤害 =====
     affectedPlayers.foreach { player =>
-      player.hpChange(this, owner.attr.BombDamage)
+      // 伤害来源是炸弹的拥有者（而非炸弹自身），这样击杀经验才能正确归属
+      player.hpChange(owner, owner.attr.BombDamage)
     }
 
-    // ===== 2. 摧毁可破坏方块并生成道具 =====
+    // ===== 2. 摧毁可破坏方块并生成道具（含经验奖励） =====
+    var destroyedObstacleCount = 0
     affectedObstacles.foreach { case (gx, gz) =>
       scene.map.destroyObstacleAt(gx, gz) match {
         case Some((worldX, worldY, worldZ)) =>
+          destroyedObstacleCount += 1
           PropsManager.randomPick() match {
             case Some(propsConfig) =>
               val propsItem = PropsItem(propsConfig, movement.sceneId)
@@ -109,6 +112,29 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
             case None => // 不生成道具
           }
         case None =>
+      }
+    }
+
+    // 障碍物销毁经验奖励：每个障碍物 10 经验（与客户端离线模式一致）
+    if (destroyedObstacleCount > 0) {
+      owner match {
+        case player: Player =>
+          val expReward = 10 * destroyedObstacleCount
+          val leveledUp = player.attr.addExp(expReward)
+          println(s"[EXP_GAIN] 玩家[${owner.id}] 摧毁${destroyedObstacleCount}个障碍物 获得经验 +$expReward, " +
+            s"当前exp=${player.attr.exp}/${player.attr.maxExpToLevelUp}, level=${player.attr.level}, 升级=${leveledUp}")
+
+          val expBody = MessageBody(
+            "playerId" -> owner.id,
+            "exp" -> player.attr.exp,
+            "level" -> player.attr.level,
+            "maxExpToLevelUp" -> player.attr.maxExpToLevelUp,
+            "leveledUp" -> (if (leveledUp) 1 else 0)
+          )
+          scene.players.values.foreach { p =>
+            PlayerChannels.send(p.id, Message(CmdType.EXP_GAIN, expBody))
+          }
+        case _ => // 非玩家来源不奖励经验
       }
     }
 

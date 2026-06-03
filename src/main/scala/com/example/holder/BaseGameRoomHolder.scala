@@ -469,9 +469,14 @@ object BaseGameRoomHolder extends ITick {
           BaseGameRoomHolder.removeRoom(id) // 移除空房间
         }
       }
-      // 及时通知房间成员变化和刷新被移除成员的房间信息
-      notifyRoomChange() // 通知房间成员变化
-      BaseGameRoomHolder.refreshRoomInfo(playerId) // 刷新被移除成员的房间信息
+      // 为了性能不会在解散队伍移除成员的时候通知其他人队伍成员变化
+      // 当不为解散队伍时
+      if (!Seq(ExitTypeEnum.DISBAND).contains(exitType)) {
+        notifyRoomChange() // 通知房间成员变化
+        // 通知被踢出的成员新的房间信息，因为每次调用都会重新获取服务器上的所有房间的新信息，
+        // 比较耗性能，所以解散时要用同一个数据进行刷新,避免重复获取
+        BaseGameRoomHolder.refreshRoomInfo(playerId) // 刷新被移除成员的房间信息
+      }
       PlayerChannels.send(playerId, Message(CmdType.BASE_GAME_LEAVE_ROOM, MessageBody("result" -> "success", "info" -> infoStr)))
     } // 通知成员离开
 
@@ -479,8 +484,9 @@ object BaseGameRoomHolder extends ITick {
       roomMember.get(playerId) match {
         case Some(member) => {
           member.changeStatus()
-          notifyRoomChange() // 切换准备状态
-        } // 通知房间状态变化
+          notifyRoomChange()
+          PlayerChannels.info(playerId, if (member.isReady) "已准备" else "已取消准备")
+        }
         case None => ThrowBusinessException("玩家不在队伍中")
       }
     }
@@ -489,8 +495,9 @@ object BaseGameRoomHolder extends ITick {
       roomMember.get(playerId) match {
         case Some(member) => {
           member.changeCareer(career)
-          notifyRoomChange() // 更改职业
-        } // 通知房间状态变化
+          notifyRoomChange()
+          PlayerChannels.info(playerId, s"已切换职业为 $career")
+        }
         case None => ThrowBusinessException("玩家不在队伍中")
       }
     }
@@ -534,7 +541,11 @@ object BaseGameRoomHolder extends ITick {
 
     def changeMap(mapIndex: Int): Unit = {
       this.mapIndex = mapIndex
-      notifyRoomChange() // 通知房间状态变化
+      notifyRoomChange()
+      // 通知房间内所有成员地图已更换
+      roomMember.keys.foreach { pid =>
+        PlayerChannels.info(pid, s"房主已更换地图")
+      }
     }
 
     /**

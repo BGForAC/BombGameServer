@@ -125,6 +125,7 @@ class Player(pid: String) extends Actor(pid) {
    * 获取炸弹放置冷却剩余时间（毫秒），供 PLAYER_SYNC 同步到客户端
    */
   def bombCooldownRemaining: Int = {
+    if (lastPutBombTime == 0L) return 0  // 从未放置过炸弹，无冷却
     val elapsed = System.currentTimeMillis() - lastPutBombTime
     Math.max(0, attr.Cooldown - elapsed.toInt)
   }
