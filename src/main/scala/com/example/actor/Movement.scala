@@ -111,7 +111,7 @@ class Movement(owner: Actor) {
     }
     // 检查目标位置是否可行走
     if (!curScene.walkable(x, y, z)) {
-      println(s"玩家${owner.id}尝试在不可行走的场景位置移动，当前场景：$sceneId，位置：($x, $y, $z)")
+//      println(s"玩家${owner.id}尝试在不可行走的场景位置移动，当前场景：$sceneId，位置：($x, $y, $z)")
       x = lastX
       y = lastY
       z = lastZ

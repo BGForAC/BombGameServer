@@ -31,13 +31,13 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
     val remaining = explodeTime - now
 
     // 每60 tick输出一次调试信息，确认炸弹tick被正常调用
-    if (tickIdx % 60 == 0 || remaining <= 0) {
-      println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id] sceneId=[${movement.sceneId}] owner=[${owner.id}] remaining=${remaining}ms explodeTime=$explodeTime now=$now")
-    }
+//    if (tickIdx % 60 == 0 || remaining <= 0) {
+//      println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id] sceneId=[${movement.sceneId}] owner=[${owner.id}] remaining=${remaining}ms explodeTime=$explodeTime now=$now")
+//    }
 
     // 检查是否到达爆炸时间
     if (now >= explodeTime) {
-      println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id]到达爆炸时间 (延迟${-remaining}ms), 执行explode()")
+//      println(s"[Bomb.tick] tick#$tickIdx 炸弹[$id]到达爆炸时间 (延迟${-remaining}ms), 执行explode()")
       explode() // 执行爆炸（explode 内部会调用 exitScene 移除自身）
     }
   }
@@ -55,7 +55,7 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
     if (isExploded) return
     isExploded = true
 
-    println(s"[Bomb.explode] ===== 炸弹[$id]开始爆炸, owner=[${owner.id}] =====")
+//    println(s"[Bomb.explode] ===== 炸弹[$id]开始爆炸, owner=[${owner.id}] =====")
 
     // 获取炸弹所在的场景
     val scene = SceneHolder.getScene(movement.sceneId)
@@ -108,7 +108,7 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
               scene.players.values.foreach { p =>
                 PlayerChannels.send(p.id, Message(CmdType.PROP_SPAWN, propsItem.toSpawnMessage))
               }
-              println(s"[Bomb] 在($worldX, $worldY, $worldZ)生成了道具[${propsConfig.id}]")
+//              println(s"[Bomb] 在($worldX, $worldY, $worldZ)生成了道具[${propsConfig.id}]")
             case None => // 不生成道具
           }
         case None =>
@@ -121,8 +121,8 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
         case player: Player =>
           val expReward = 10 * destroyedObstacleCount
           val leveledUp = player.attr.addExp(expReward)
-          println(s"[EXP_GAIN] 玩家[${owner.id}] 摧毁${destroyedObstacleCount}个障碍物 获得经验 +$expReward, " +
-            s"当前exp=${player.attr.exp}/${player.attr.maxExpToLevelUp}, level=${player.attr.level}, 升级=${leveledUp}")
+//          println(s"[EXP_GAIN] 玩家[${owner.id}] 摧毁${destroyedObstacleCount}个障碍物 获得经验 +$expReward, " +
+//            s"当前exp=${player.attr.exp}/${player.attr.maxExpToLevelUp}, level=${player.attr.level}, 升级=${leveledUp}")
 
           val expBody = MessageBody(
             "playerId" -> owner.id,
@@ -141,14 +141,14 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
     // ===== 3. 触发其他炸弹连锁爆炸 =====
     affectedBombs.foreach { bomb =>
       if (bomb.id != this.id && !bomb.isExploded) {
-        println(s"[Bomb] 炸弹[$id]触发炸弹[${bomb.id}]连锁爆炸")
+//        println(s"[Bomb] 炸弹[$id]触发炸弹[${bomb.id}]连锁爆炸")
         bomb.explode()  // 递归连锁引爆
       }
     }
 
     // ===== 4. 广播炸弹爆炸事件 =====
     val playerCount = scene.players.size
-    println(s"[Bomb.explode] 向场景内${playerCount}名玩家广播BOMB_EXPLODE: bombId=[$id], pos=($bombX,$bombZ), grid=($centerGridX,$centerGridZ), radius=$radius, 摧毁障碍物=${affectedObstacles.size}个")
+//    println(s"[Bomb.explode] 向场景内${playerCount}名玩家广播BOMB_EXPLODE: bombId=[$id], pos=($bombX,$bombZ), grid=($centerGridX,$centerGridZ), radius=$radius, 摧毁障碍物=${affectedObstacles.size}个")
 
     // 序列化障碍物网格列表（嵌套 JSON: {"0":{"x":18,"y":18},"1":{"x":19,"y":19}}）
     // 使用嵌套 MessageBody 避免字符串内分隔符与 JSON 解析器冲突
@@ -174,15 +174,15 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
     }
 
     val chainCount = affectedBombs.size - 1
-    println(s"[Bomb.explode] ===== 炸弹[$id]爆炸完成: 伤害${affectedPlayers.size}名玩家, 摧毁${affectedObstacles.size}个方块, 连锁引爆${chainCount}个炸弹 =====")
+//    println(s"[Bomb.explode] ===== 炸弹[$id]爆炸完成: 伤害${affectedPlayers.size}名玩家, 摧毁${affectedObstacles.size}个方块, 连锁引爆${chainCount}个炸弹 =====")
 
     // ===== 5. 从场景中移除此炸弹（无论通过 tick 还是连锁引爆触发，都必须移除） =====
     // 修复：原来 exitScene 只在 tick() 中调用，连锁引爆的炸弹永远不会从 actors 中移除
     val sceneId = this.movement.sceneId
     if (sceneId != null) {
-      println(s"[Bomb.explode] 炸弹[$id]开始从场景[$sceneId]移除")
+//      println(s"[Bomb.explode] 炸弹[$id]开始从场景[$sceneId]移除")
       SceneHolder.exitScene(sceneId, this)
-      println(s"[Bomb.explode] 炸弹[$id]已从场景移除")
+//      println(s"[Bomb.explode] 炸弹[$id]已从场景移除")
     } else {
       println(s"[Bomb.explode] 警告: 炸弹[$id] sceneId 为 null，无法从场景移除")
     }

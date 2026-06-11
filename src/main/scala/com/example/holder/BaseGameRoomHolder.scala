@@ -22,24 +22,14 @@ object BaseGameRoomHolder extends ITick {
   private val rooms: mutable.Map[Int, Room] = mutable.Map.empty
   // 场景ID到房间的映射（用于游戏结束时自动返回房间）
   private val sceneToRoom: mutable.Map[String, Room] = mutable.Map.empty
-  // 下次更新时间
-  private var nextUpdateTime = 0L
 
   /**
-   * 定时更新房间状态
+   * 定时更新房间状态（仅处理离线检测和空房间清理，不再主动广播房间列表）
+   * 房间列表同步改为被动模式：客户端需发送 BaseGameReqRoomInfo 请求才会收到响应
    * @param tickIdx 当前tick索引
    */
   def tick(tickIdx: Long): Unit = {
-    // 打印tick日志，方便排查定时任务卡顿或频率问题
-    // println(s"[Tick] 当前Tick索引: $tickIdx, 当前房间数量: ${rooms.size}")
-
-    rooms.values.foreach(_.tick(tickIdx)) // 遍历所有房间，执行各自的tick方法
-    // 定期向所有玩家发送房间信息
-    if (nextUpdateTime < System.currentTimeMillis()) {
-      nextUpdateTime = System.currentTimeMillis() + 5000 // 设置下次更新时间为当前时间+5秒
-      println(s"[Tick] 广播房间信息给所有玩家，当前房间总数: ${rooms.size}")
-      PlayerChannels.sendToAll(roomMessage) // 向所有玩家广播房间信息
-    }
+    rooms.values.foreach(_.tick(tickIdx)) // 遍历所有房间，执行各自的tick方法（离线检测等）
   }
 
   /**
@@ -576,6 +566,16 @@ object BaseGameRoomHolder extends ITick {
 
       // 获取房间中的所有玩家
       val playerIds = roomMember.keys.toArray
+
+      // 校验所有玩家是否已选择职业（防止 setOutScene 清空 career 后重开游戏崩溃）
+      playerIds.foreach(id => {
+        val player = PlayerHolder.getPlayer(id)
+        if (player.career == null || player.career.isEmpty) {
+          PlayerChannels.alert(leaderId, s"玩家[$id]未选择职业，无法开始游戏")
+          ThrowBusinessException(s"玩家[$id]未选择职业")
+        }
+      })
+
       val players = playerIds.map(id =>{
         val player = PlayerHolder.getPlayer(id)
         player.attr.initAttr(player.career)

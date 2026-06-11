@@ -65,7 +65,7 @@ class GameMap(scene: Scene) {
         val obstacleCount = grids.values.count(_.isObstacle)
         val walkableCount = grids.size - obstacleCount
         println(s"[GameMap] 从 mapInfo 加载了 ${grids.size} 个地图节点（可行走=${walkableCount}, 可破坏障碍物=${obstacleCount}）")
-        println(s"[GameMap] 语义说明: 不在 grids 中的位置均为墙壁（JSON未记录=墙）")
+        //println(s"[GameMap] 语义说明: 不在 grids 中的位置均为墙壁（JSON未记录=墙）")
       case _ =>
         println("[GameMap] mapInfo 中缺少 mapData 字段")
     }

@@ -86,6 +86,10 @@ class BaseAttr(owner: Actor) {
    * @return BaseAttr实例
    */
   def initAttr(typ: String): BaseAttr = {
+    // 参数校验：防止传入 null 或空字符串导致拼接出 attr/null.attr
+    if (typ == null || typ.isEmpty) {
+      throw new RuntimeException(s"角色类型参数无效[typ=$typ]，无法初始化属性。请确保玩家已选择职业。")
+    }
     // 构建属性文件路径
     val filePath = s"attr/$typ.attr"
     // 从类加载器中获取属性文件

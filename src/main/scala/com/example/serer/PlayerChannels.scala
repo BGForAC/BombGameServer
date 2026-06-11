@@ -64,8 +64,7 @@ object PlayerChannels extends ITick {
   def send(playerId: String, msg: Message): Unit = {
     channels.get(playerId) match {
       case Some(ctx) => ctx.writeAndFlush(msg)  // 如果找到通道，则发送消息
-      case None => println(s"玩家 $playerId 未找到.")  // 如果玩家不存在，打印提示信息
-      case _ => println("未知的message类型")  // 其他未知情况处理
+      case _ => // 玩家通道不存在，忽略
     }
   }
 

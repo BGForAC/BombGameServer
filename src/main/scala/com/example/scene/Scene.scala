@@ -33,6 +33,10 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   // 是否为随机匹配模式（非房间创建）
   var isRandomMatch: Boolean = false
 
+  // 上次同步的状态缓存（playerId → 上次发送的全量 MessageBody），用于增量同步
+  // 仅发送与上次不一致的字段，减少网络传输量
+  private val lastSyncState: mutable.Map[String, MessageBody] = mutable.Map()
+
   // 获取场景ID
   def id: String = sceneId
 
@@ -47,14 +51,15 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     // 遍历场景中的所有角色并调用其tick方法
     actors.values.foreach(actor => actor.tick(tickIdx))
 
-    // 每帧广播全量玩家状态同步（所有玩家的 HP + 属性 + 位置），确保客户端及时反映服务端权威状态
-    // 使用嵌套 MessageBody 一次性广播所有玩家数据，减少网络消息数量
+    // 每帧广播玩家状态增量同步：仅发送与上次缓存相比发生变化的状态字段
+    // 首次同步发送全量，后续仅发送变化的字段（动态长度），大幅减少网络传输量
     if (players.nonEmpty) {
       val allPlayersBody = new MessageBody()
       players.values.foreach { p =>
         val info = p.movement.info
         if (!info.isEmpty) {
-          val playerBody = MessageBody(
+          // 构建当前全量状态快照
+          val currentState = MessageBody(
             Seq(
               "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
               "level" -> p.attr.level, "exp" -> p.attr.exp,
@@ -71,7 +76,30 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
               "maxBombCount" -> p.attr.MaxBombCount
             ) ++ info: _*
           )
-          allPlayersBody.put(p.id, playerBody)
+
+          // 获取上次同步的缓存状态
+          val prevState = lastSyncState.get(p.id)
+
+          // 构建增量消息体：仅包含变化的字段（首次同步则全量）
+          val deltaBody = if (prevState.isEmpty) {
+            currentState  // 首次同步：发送全量
+          } else {
+            val delta = new MessageBody()
+            val prev = prevState.get
+            currentState.foreach { case (k, v) =>
+              // 仅当 key 不存在于缓存，或值发生变化时才加入增量消息
+              if (!prev.contains(k) || prev(k).toString != v.toString) {
+                delta.put(k, v)
+              }
+            }
+            delta
+          }
+
+          // 有变化才加入广播，并更新缓存
+          if (!deltaBody.isEmpty) {
+            allPlayersBody.put(p.id, deltaBody)
+            lastSyncState(p.id) = currentState
+          }
         }
       }
       if (!allPlayersBody.isEmpty) {
@@ -80,15 +108,15 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     }
 
     // 每60 tick输出一次场景摘要（约1秒，便于排查）
-    if (tickIdx % 60 == 0) {
-      val bombCount = actors.values.count(_.isInstanceOf[Bomb])
-      if (bombCount > 0 || players.nonEmpty) {
-        val hpInfo = players.values.map(p =>
-          s"${p.id}:HP=${p.attr.hp}/${p.attr.maxHp} Lv.${p.attr.level} Exp=${p.attr.exp}"
-        ).mkString(", ")
-        println(s"[Scene.tick] tick#$tickIdx 场景[$sceneId]: 总actor=${actors.size}, 炸弹=$bombCount, 玩家=${players.size} [$hpInfo]")
-      }
-    }
+    //    if (tickIdx % 60 == 0) {
+    //      val bombCount = actors.values.count(_.isInstanceOf[Bomb])
+    //      if (bombCount > 0 || players.nonEmpty) {
+    //        val hpInfo = players.values.map(p =>
+    //          s"${p.id}:HP=${p.attr.hp}/${p.attr.maxHp} Lv.${p.attr.level} Exp=${p.attr.exp}"
+    //        ).mkString(", ")
+    //        println(s"[Scene.tick] tick#$tickIdx 场景[$sceneId]: 总actor=${actors.size}, 炸弹=$bombCount, 玩家=${players.size} [$hpInfo]")
+    //      }
+    //    }
 
     // 游戏结束检测：存活玩家 ≤ 1 时判定游戏结束（需要至少2名玩家才开始检测）
     if (!isGameOver && players.size > 1) {
@@ -132,9 +160,9 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     actor match {
       case player: Player =>
         players += (player.id -> player)
-        println(s"[Scene.onEnter] 玩家[${player.id}]进入场景[$sceneId], 当前玩家=${players.size}")
+      //        println(s"[Scene.onEnter] 玩家[${player.id}]进入场景[$sceneId], 当前玩家=${players.size}")
       case bomb: Bomb =>
-        println(s"[Scene.onEnter] 炸弹[${bomb.id}]进入场景[$sceneId], 当前actor总数=${actors.size}")
+      //        println(s"[Scene.onEnter] 炸弹[${bomb.id}]进入场景[$sceneId], 当前actor总数=${actors.size}")
       case _ =>
     }
   }
@@ -169,6 +197,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     actor match {
       case player: Player =>
         players -= player.id
+        lastSyncState -= player.id  // 清理增量同步缓存
       case _ =>
     }
     // 设置角色的当前场景为空
@@ -197,7 +226,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def getBombsAtGrid(gridX: Int, gridZ: Int, gridSize: Int = 100, offsetDistance: Int = 15): List[Bomb] = {
     actors.values.collect {
       case bomb: Bomb if Math.floor(bomb.movement.info.getInt("x").toDouble / gridSize).toInt + offsetDistance == gridX &&
-                        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
+        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
         bomb
     }.toList
   }
@@ -219,8 +248,8 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
  * SceneFacade特质提供场景的接口和工具方法
  */
 trait SceneFacade extends ScanAble[Int] {
-  // 用于生成唯一标识的计数器
-  private var uniqueKey = 0
+  // 用于生成唯一标识的计数器（AtomicInteger 保证多房间并发创建场景时线程安全）
+  private val uniqueKey = new java.util.concurrent.atomic.AtomicInteger(0)
 
   /**
    * 生成场景的唯一ID
@@ -228,8 +257,7 @@ trait SceneFacade extends ScanAble[Int] {
    * @return 生成的场景ID
    */
   def genSceneId(_def: SceneDef): String = {
-    uniqueKey += 1
-    s"${_def.id}_$uniqueKey"
+    s"${_def.id}_${uniqueKey.incrementAndGet()}"
   }
 
   // 检查角色是否可以进入场景

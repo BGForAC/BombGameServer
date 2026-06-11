@@ -203,13 +203,13 @@ class Player(pid: String) extends Actor(pid) {
       lastRecoverBombTime = System.currentTimeMillis()
     }
 
-    println(s"[Player.putBomb] 玩家[$id]创建炸弹[${bomb.id}]: " +
+/*    println(s"[Player.putBomb] 玩家[$id]创建炸弹[${bomb.id}]: " +
       s"bombNum=$bombNum/${attr.MaxBombCount}, " +
       s"fuseTime=${attr.FuseTime}ms, " +
       s"cooldown=${attr.Cooldown}ms, " +
       s"radius=${attr.BombRadius}, " +
       s"damage=${attr.BombDamage}, " +
-      s"sceneId=$movement.sceneId")
+      s"sceneId=${movement.sceneId}")*/
 
     bomb
   }
