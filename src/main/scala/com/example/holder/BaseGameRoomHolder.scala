@@ -39,7 +39,7 @@ object BaseGameRoomHolder extends ITick {
    */
   private[holder] def registerSceneRoom(sceneId: String, room: Room): Unit = {
     sceneToRoom += (sceneId -> room)
-    println(s"[SceneRoomMap] 场景[$sceneId] 关联到房间[${room.id}]")
+    //println(s"[SceneRoomMap] 场景[$sceneId] 关联到房间[${room.id}]")
   }
 
   /**
@@ -50,11 +50,11 @@ object BaseGameRoomHolder extends ITick {
   def onGameOver(sceneId: String, isRandomMatch: Boolean): Unit = {
     sceneToRoom.get(sceneId) match {
       case Some(room) =>
-        println(s"[GameOver] 场景[$sceneId] 属于房间[${room.id}]，自动返回房间")
+        //println(s"[GameOver] 场景[$sceneId] 属于房间[${room.id}]，自动返回房间")
         room.onGameReturn()
         sceneToRoom -= sceneId
       case None =>
-        println(s"[GameOver] 场景[$sceneId] 无关联房间（随机匹配），跳过房间返回")
+        //println(s"[GameOver] 场景[$sceneId] 无关联房间（随机匹配），跳过房间返回")
     }
   }
 
@@ -64,16 +64,16 @@ object BaseGameRoomHolder extends ITick {
    * @param roomName 房间名称
    */
   def createRoom(playerId: String, roomName: String): Unit = {
-    println(s"[CreateRoom] 玩家 $playerId 尝试创建房间: $roomName")
+    //println(s"[CreateRoom] 玩家 $playerId 尝试创建房间: $roomName")
     // 检查房间名称是否合法
     if (Seq('-', '=', ':', '%', ';', '|').exists(c => roomName.contains(c))) {
-      println(s"[CreateRoom] 失败: 房间名包含非法字符")
+      //println(s"[CreateRoom] 失败: 房间名包含非法字符")
       ThrowBusinessException("房间名不合法，创建失败")
     }
     val room = Room(playerId, roomName) // 创建新房间
     rooms += room.id -> room // 将房间添加到房间映射中
     joinRoom(playerId, room.id) // 创建者自动加入房间
-    println(s"[CreateRoom] 成功: 房间ID ${room.id} 已创建")
+    //println(s"[CreateRoom] 成功: 房间ID ${room.id} 已创建")
   }
 
   /**
@@ -81,18 +81,18 @@ object BaseGameRoomHolder extends ITick {
    * @param playerId 请求者ID
    */
   def reqRemoveRoom(playerId: String): Unit = {
-    println(s"[RemoveRoom] 玩家 $playerId 请求移除房间")
+    //println(s"[RemoveRoom] 玩家 $playerId 请求移除房间")
     playerId2Room.get(playerId) match {
       case Some(room) => {
         // 只有房主才能移除房间
         if (room.leaderId != playerId) {
-          println(s"[RemoveRoom] 失败: 玩家 $playerId 不是房主 (当前房主: ${room.leaderId})")
+          //println(s"[RemoveRoom] 失败: 玩家 $playerId 不是房主 (当前房主: ${room.leaderId})")
           ThrowBusinessException("只有房主才能移除房间")
         }
         removeRoom(room.id) // 执行移除房间操作
       }
       case None => {
-        println(s"[RemoveRoom] 失败: 玩家 $playerId 不在任何房间中")
+        //println(s"[RemoveRoom] 失败: 玩家 $playerId 不在任何房间中")
         ThrowBusinessException("玩家不在任何房间中")
       }
     }
@@ -103,27 +103,27 @@ object BaseGameRoomHolder extends ITick {
    * @param roomId 要移除的房间ID
    */
   private def removeRoom(roomId: Int): Unit = {
-    println(s"[RemoveRoom] 正在移除房间 ID: $roomId")
+    //println(s"[RemoveRoom] 正在移除房间 ID: $roomId")
     rooms.get(roomId) match {
       case Some(room) => room.beforeRemove() // 移除前处理
-      case None => println(s"[RemoveRoom] 警告: 尝试移除不存在的房间 ID: $roomId")
+      case None => //println(s"[RemoveRoom] 警告: 尝试移除不存在的房间 ID: $roomId")
     }
     rooms -= roomId // 从房间映射中移除
-    println(s"[RemoveRoom] 房间 ID: $roomId 已从管理列表中移除")
+    //println(s"[RemoveRoom] 房间 ID: $roomId 已从管理列表中移除")
   }
 
   def startGame(playerId: String) : Unit = {
     playerId2Room.get(playerId) match {
       case Some(room) =>{
         if (room.leaderId != playerId) {
-          println(s"[StartGame] 失败: 操作者 $playerId 不是房主 (当前房主: ${room.leaderId})")
+          //println(s"[StartGame] 失败: 操作者 $playerId 不是房主 (当前房主: ${room.leaderId})")
           ThrowBusinessException("只有房主才能开始游戏")
         }
         room.startGame()
-        println(s"[StartGame] 成功: 房间 ${room.id} 开始游戏")
+        //println(s"[StartGame] 成功: 房间 ${room.id} 开始游戏")
       }
       case None => {
-        println(s"[StartGame] 失败: 目标玩家 $playerId 不在房间中")
+        //println(s"[StartGame] 失败: 目标玩家 $playerId 不在房间中")
         ThrowBusinessException("目标不在任何房间中")
       }
     }
@@ -134,21 +134,21 @@ object BaseGameRoomHolder extends ITick {
       case Some(room) => {
         // 只有房主才能更换房主
         if (playerId != room.leaderId) {
-          println(s"[ChangeMap] 失败: 操作者 $playerId 不是房主 (当前房主: ${room.leaderId})")
+          //println(s"[ChangeMap] 失败: 操作者 $playerId 不是房主 (当前房主: ${room.leaderId})")
           ThrowBusinessException("只有房主才能更换房主")
         }
         room.changeMap(mapIndex) // 更换地图
-        println(s"[ChangeMap] 地图更换成功！")
+        //println(s"[ChangeMap] 地图更换成功！")
       }
       case None => {
-        println(s"[ChangeLeader] 失败: 目标玩家 $playerId 不在房间中")
+        //println(s"[ChangeLeader] 失败: 目标玩家 $playerId 不在房间中")
         ThrowBusinessException("目标不在任何房间中")
       }
     }
   }
 
   def sendRoomMessage(playerId: String, message: Message): Unit = {
-    println(s"[SendRoomMessage] 玩家 $playerId 发送消息到房间")
+    //println(s"[SendRoomMessage] 玩家 $playerId 发送消息到房间")
     playerId2Room.get(playerId) match {
       case Some(room) => {
         val msg = message.getString("message")
@@ -166,14 +166,14 @@ object BaseGameRoomHolder extends ITick {
    * @param roomId 房间ID
    */
   def joinRoom(playerId: String, roomId: Int): Unit = {
-    println(s"[JoinRoom] 玩家 $playerId 尝试加入房间 ID: $roomId")
+    //println(s"[JoinRoom] 玩家 $playerId 尝试加入房间 ID: $roomId")
     rooms.get(roomId) match {
       case Some(room) => {
         room.addMember(playerId) // 添加成员到房间
-        println(s"[JoinRoom] 成功: 玩家 $playerId 已加入房间 $roomId")
+        //println(s"[JoinRoom] 成功: 玩家 $playerId 已加入房间 $roomId")
       }
       case None => {
-        println(s"[JoinRoom] 失败: 房间 ID: $roomId 不存在")
+        //println(s"[JoinRoom] 失败: 房间 ID: $roomId 不存在")
         ThrowBusinessException("房间不存在")
       }
     }
@@ -184,11 +184,11 @@ object BaseGameRoomHolder extends ITick {
    * @param playerId 玩家ID
    */
   def leaveRoom(playerId: String): Unit = {
-    println(s"[LeaveRoom] 玩家 $playerId 请求离开房间")
+    //println(s"[LeaveRoom] 玩家 $playerId 请求离开房间")
     playerId2Room.get(playerId) match {
       case Some(room) => room.removeMember(playerId) // 从房间中移除成员
       case None => {
-        println(s"[LeaveRoom] 失败: 玩家 $playerId 不在房间中")
+        //println(s"[LeaveRoom] 失败: 玩家 $playerId 不在房间中")
         ThrowBusinessException("你不在房间中")
       }
     }
@@ -200,19 +200,19 @@ object BaseGameRoomHolder extends ITick {
    * @param sourceId 操作者ID
    */
   def kickPlayer(targetId: String, sourceId: String) = {
-    println(s"[KickPlayer] 玩家 $sourceId 尝试踢出玩家 $targetId")
+    //println(s"[KickPlayer] 玩家 $sourceId 尝试踢出玩家 $targetId")
     playerId2Room.get(targetId) match {
       case Some(room) => {
         // 只有房主才能踢人
         if (room.leaderId != sourceId) {
-          println(s"[KickPlayer] 失败: 操作者 $sourceId 不是房主 (当前房主: ${room.leaderId})")
+          //println(s"[KickPlayer] 失败: 操作者 $sourceId 不是房主 (当前房主: ${room.leaderId})")
           ThrowBusinessException("只有房主才能踢人")
         }
         room.removeMember(targetId, ExitTypeEnum.KICK) // 以踢出方式移除成员
-        println(s"[KickPlayer] 成功: 玩家 $targetId 已被踢出")
+        //println(s"[KickPlayer] 成功: 玩家 $targetId 已被踢出")
       }
       case None => {
-        println(s"[KickPlayer] 失败: 目标玩家 $targetId 不在房间中")
+        //println(s"[KickPlayer] 失败: 目标玩家 $targetId 不在房间中")
         ThrowBusinessException("房间不存在")
       }
     }
@@ -223,7 +223,7 @@ object BaseGameRoomHolder extends ITick {
    * @param playerId 玩家ID
    */
   def ready(playerId: String): Unit = {
-    println(s"[Ready] 玩家 $playerId 切换准备状态") // 可选：如果状态切换非常频繁，建议注释掉
+    //println(s"[Ready] 玩家 $playerId 切换准备状态") // 可选：如果状态切换非常频繁，建议注释掉
     playerId2Room.get(playerId) match {
       case Some(room) => room.ready(playerId) // 切换玩家准备状态
       case None => ThrowBusinessException("玩家不在任何房间中")
@@ -236,7 +236,7 @@ object BaseGameRoomHolder extends ITick {
    * @param career 职业名称
    */
   def changeCareer(playerId: String, career: String): Unit = {
-    println(s"[ChangeCareer] 玩家 $playerId 切换职业为 $career") // 可选
+    //println(s"[ChangeCareer] 玩家 $playerId 切换职业为 $career") // 可选
     playerId2Room.get(playerId) match {
       case Some(room) => room.changeCareer(playerId, career) // 更改玩家职业
       case None => ThrowBusinessException("玩家不在任何房间中")
@@ -249,19 +249,19 @@ object BaseGameRoomHolder extends ITick {
    * @param targetId 新房主ID
    */
   def changeLeader(sourceId: String, targetId: String): Unit = {
-    println(s"[ChangeLeader] 玩家 $sourceId 尝试将房主移交给 $targetId")
+    //println(s"[ChangeLeader] 玩家 $sourceId 尝试将房主移交给 $targetId")
     playerId2Room.get(targetId) match {
       case Some(room) => {
         // 只有房主才能更换房主
         if (sourceId != room.leaderId) {
-          println(s"[ChangeLeader] 失败: 操作者 $sourceId 不是房主 (当前房主: ${room.leaderId})")
+          //println(s"[ChangeLeader] 失败: 操作者 $sourceId 不是房主 (当前房主: ${room.leaderId})")
           ThrowBusinessException("只有房主才能更换房主")
         }
         room.changeLeader(targetId) // 更换房主
-        println(s"[ChangeLeader] 成功: 房主已变更为 $targetId")
+        //println(s"[ChangeLeader] 成功: 房主已变更为 $targetId")
       }
       case None => {
-        println(s"[ChangeLeader] 失败: 目标玩家 $targetId 不在房间中")
+        //println(s"[ChangeLeader] 失败: 目标玩家 $targetId 不在房间中")
         ThrowBusinessException("目标不在任何房间中")
       }
     }
@@ -274,7 +274,7 @@ object BaseGameRoomHolder extends ITick {
   def refreshRoomInfo(playerIds: String*): Unit = {
     val message = roomMessage // 获取房间消息
     playerIds.foreach(pid => PlayerChannels.send(pid, message)) // 向指定玩家发送房间信息
-    println(s"[Refresh] 向玩家 ${playerIds.mkString(",")} 刷新了房间信息") // 可选
+    //println(s"[Refresh] 向玩家 ${playerIds.mkString(",")} 刷新了房间信息") // 可选
   }
 
   /**
@@ -290,15 +290,15 @@ object BaseGameRoomHolder extends ITick {
    * @return 房间信息消息体
    */
   def info: MessageBody = {
-    var x = MessageBody()
+    val x = new MessageBody()
     var i = 0
     rooms.values.foreach(room => {
-      x = MessageBody.addMessageBody(x , MessageBody(s"room${i}" -> room.infoStr))
+      x.put(s"room${i}", room.infoStr)
       i = i + 1
     })
-    if(x == MessageBody()){
+    if (x.isEmpty) {
       MessageBody("rooms" -> "")
-    }else {
+    } else {
       MessageBody("rooms" -> x) // 组装所有房间的信息
     }
   }
@@ -393,7 +393,7 @@ object BaseGameRoomHolder extends ITick {
       // 检查并移除离线玩家
       roomMember.keys.foreach(playerId => {
         if (!PlayerHolder.isOnline(playerId)) {
-          println(s"[RoomTick] 房间 $id: 检测到玩家 $playerId 离线，执行移除")
+          //println(s"[RoomTick] 房间 $id: 检测到玩家 $playerId 离线，执行移除")
           removeMember(playerId) // 移除离线玩家
         }
       })
@@ -408,7 +408,7 @@ object BaseGameRoomHolder extends ITick {
      * 移除房间前的处理
      */
     def beforeRemove(): Unit = {
-      println(s"[RoomBeforeRemove] 房间 $id 即将解散，开始移除所有成员")
+      //println(s"[RoomBeforeRemove] 房间 $id 即将解散，开始移除所有成员")
       val ids = mutable.ListBuffer.empty[String]
       roomMember.keys.foreach({ id =>
         ids += id
@@ -424,12 +424,12 @@ object BaseGameRoomHolder extends ITick {
     def addMember(playerId: String): Unit = {
       // 检查玩家是否在线
       if (!PlayerHolder.isOnline(playerId)) {
-        println(s"[AddMember] 失败: 玩家 $playerId 不在线")
+        //println(s"[AddMember] 失败: 玩家 $playerId 不在线")
         ThrowBusinessException("玩家未登录或已离线")
       }
       // 检查房间是否已满
       if (roomMember.size >= roomSize) {
-        println(s"[AddMember] 失败: 房间 $id 人数已满 (${roomMember.size}/$roomSize)")
+        //println(s"[AddMember] 失败: 房间 $id 人数已满 (${roomMember.size}/$roomSize)")
         ThrowBusinessException("房间人数已满")
       }
       roomMember += (playerId -> RoomMember(playerId, this)) // 添加新成员
@@ -445,14 +445,14 @@ object BaseGameRoomHolder extends ITick {
      * @param exitType 退出类型
      */
     def removeMember(playerId: String, exitType: Int = ExitTypeEnum.LEAVE): Unit = {
-      println(s"[RemoveMember] 房间 $id: 移除成员 $playerId, 原因: ${ExitTypeEnum.getExitTypeStr(exitType)}")
+      //println(s"[RemoveMember] 房间 $id: 移除成员 $playerId, 原因: ${ExitTypeEnum.getExitTypeStr(exitType)}")
       roomMember -= playerId // 从房间中移除成员
       playerId2Room -= playerId // 从玩家到房间的映射中移除
       // 如果移除的是房主，需要选择新房主
       if (playerId == leaderId) {
         if(roomMember.size > 0){
           val nextLeader = roomMember.keys.toArray.apply(Random.nextInt(roomMember.size)) // 随机选择新房主
-          println(s"[RemoveMember] 房主 $playerId 离开，随机指定新房主: $nextLeader")
+          //println(s"[RemoveMember] 房主 $playerId 离开，随机指定新房主: $nextLeader")
           changeLeader(nextLeader) // 更换房主
         }else {
           // 房间为空，将在 tick 或这里触发 removeRoom，避免重复日志，这里不打印
@@ -508,10 +508,10 @@ object BaseGameRoomHolder extends ITick {
 
 
     private def info: MessageBody = {
-      var memberInfos = MessageBody()
-      var i = 0;
-      roomMember.values.foreach( roomMember =>{
-        memberInfos = MessageBody.addMessageBody(memberInfos ,MessageBody(s"member${i}" -> roomMember.info))
+      val memberInfos = new MessageBody()
+      var i = 0
+      roomMember.values.foreach(m => {
+        memberInfos.put(s"member${i}", m.info)
         i = i + 1
       })
       MessageBody("roomId" -> id, "roomName" -> roomName, "members" -> memberInfos, "leaderId" -> leaderId, // 组装所有成员信息
@@ -543,9 +543,12 @@ object BaseGameRoomHolder extends ITick {
      */
     def onGameReturn(): Unit = {
       isStartGame = false
-      // 重置所有成员的准备状态
-      roomMember.values.foreach(_.isReady = false)
-      println(s"[Room.onGameReturn] 房间[$id] 游戏结束, 重置准备状态, 通知成员返回房间")
+      // 重置所有成员的准备状态和职业（setOutScene 会清空 career，需在此恢复默认值）
+      roomMember.values.foreach { m =>
+        m.isReady = false
+        m.player.career = "Balance"
+      }
+      //println(s"[Room.onGameReturn] 房间[$id] 游戏结束, 重置准备状态和职业, 通知成员返回房间")
       // 通知房间成员状态变化
       notifyRoomChange()
       // 向每个成员发送房间信息
@@ -582,17 +585,12 @@ object BaseGameRoomHolder extends ITick {
         (id, PlayerHolder.getPlayer(id))
       })
 
-      players.foreach( player => {
-
-      })
-
-
       // 检查是否有离线玩家
       val offLinePlayers = players.filter(_._2 == null)
       if (offLinePlayers.nonEmpty) {
         // 移除离线玩家
         offLinePlayers.foreach { case (playerId, _) =>
-          println(s"玩家[$playerId]已离线，移出房间")
+          //println(s"玩家[$playerId]已离线，移出房间")
           removeMember(playerId)
         }
         PlayerChannels.alert(leaderId, "存在离线玩家，无法开始游戏")
@@ -632,7 +630,7 @@ object BaseGameRoomHolder extends ITick {
 
       // 验证玩家索引信息是否正确
       if (playerIdxInfo.size != players.length) {
-        println(s"玩家索引信息数量[${playerIdxInfo.size}]与玩家数量[${players.length}]不匹配")
+        //println(s"玩家索引信息数量[${playerIdxInfo.size}]与玩家数量[${players.length}]不匹配")
         // 发送错误消息给所有玩家
         players.foreach { case (playerId, _) =>
           PlayerChannels.sendError(playerId, "游戏启动失败，有玩家没有成功进入场景")
@@ -641,10 +639,10 @@ object BaseGameRoomHolder extends ITick {
       }
 
       // 构建玩家信息字符串
-      var playersInfo = MessageBody()
+      val playersInfo = new MessageBody()
       playerIdxInfo.keys.foreach( playerId => {
         val player = PlayerHolder.getPlayer(playerId)
-        playersInfo = MessageBody.addMessageBody(playersInfo, MessageBody(playerId -> player.baseInfoStr()))
+        playersInfo.put(playerId, player.baseInfoStr())
       })
 
       // 发送进入游戏场景的消息给所有玩家
@@ -654,7 +652,7 @@ object BaseGameRoomHolder extends ITick {
       }
 
       // 打印游戏启动成功信息
-      println(s"游戏启动成功，房间[$id]中的玩家[${players.mkString(",")}]进入场景")
+      //println(s"游戏启动成功，房间[$id]中的玩家[${players.mkString(",")}]进入场景")
     }
 
 

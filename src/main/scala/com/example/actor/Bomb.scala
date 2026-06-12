@@ -184,7 +184,7 @@ class Bomb(owner: Actor, id: String) extends Actor(id) {
       SceneHolder.exitScene(sceneId, this)
 //      println(s"[Bomb.explode] 炸弹[$id]已从场景移除")
     } else {
-      println(s"[Bomb.explode] 警告: 炸弹[$id] sceneId 为 null，无法从场景移除")
+      //println(s"[Bomb.explode] 警告: 炸弹[$id] sceneId 为 null，无法从场景移除")
     }
   }
 

@@ -38,7 +38,7 @@ object PropsEffectSystem extends ITick {
   def applyEffect(playerId: String, config: PropsConfig): Unit = {
     val player = PlayerHolder.getPlayer(playerId)
     if (player == null) {
-      println(s"[PropsEffectSystem] 玩家[$playerId]不存在，无法应用道具效果")
+      //println(s"[PropsEffectSystem] 玩家[$playerId]不存在，无法应用道具效果")
       return
     }
 
@@ -61,7 +61,7 @@ object PropsEffectSystem extends ITick {
     // 广播道具效果启用
     broadcastEffect(playerId, config, isEnabled = true)
 
-    println(s"[PropsEffectSystem] 道具[${config.id}]效果已应用到玩家[$playerId]，类型=${config.propsType}，有效时长=${config.validTime}s")
+    //println(s"[PropsEffectSystem] 道具[${config.id}]效果已应用到玩家[$playerId]，类型=${config.propsType}，有效时长=${config.validTime}s")
   }
 
   /**
@@ -98,7 +98,7 @@ object PropsEffectSystem extends ITick {
           broadcastEffect(playerId, effect.config, isEnabled = false)
         }
         activeEffects -= playerId
-        println(s"[PropsEffectSystem] 已移除玩家[$playerId]的所有道具效果")
+        //println(s"[PropsEffectSystem] 已移除玩家[$playerId]的所有道具效果")
       case None =>
     }
   }
@@ -128,7 +128,7 @@ object PropsEffectSystem extends ITick {
         applyEffectToAttr(player, effect.config, isEnable = false)
       }
       broadcastEffect(playerId, effect.config, isEnabled = false)
-      println(s"[PropsEffectSystem] 道具[${effect.config.id}]效果到期，已从玩家[$playerId]移除")
+      //println(s"[PropsEffectSystem] 道具[${effect.config.id}]效果到期，已从玩家[$playerId]移除")
     }
   }
 

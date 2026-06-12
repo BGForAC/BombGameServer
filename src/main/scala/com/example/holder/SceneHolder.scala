@@ -22,10 +22,17 @@ object SceneHolder extends Scanner[Int, SceneFacade] with ITick {
 
   /**
    * 场景tick方法，遍历所有场景并调用其tick方法
+   * 结束后清理已完成的死场景，防止内存泄漏和无意义空转
    * @param tickIdx tick索引
    */
   def tick(tickIdx: Long): Unit = {
     scenes.values.foreach(scene => scene.tick(tickIdx))
+    // 清理已结束的场景（tick 中 isGameOver 早退，此处安全移除）
+    val removedCount = scenes.count { case (_, s) => s.isGameOver }
+    if (removedCount > 0) {
+      scenes.filterInPlace((_, scene) => !scene.isGameOver)
+      //println(s"[SceneHolder.tick] tick#$tickIdx 清理 $removedCount 个已完成场景, 当前存活场景=${scenes.size}")
+    }
   }
 
   /**

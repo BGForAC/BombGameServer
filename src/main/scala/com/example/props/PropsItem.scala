@@ -33,14 +33,14 @@ class PropsItem(id: String, val config: PropsConfig, private var sceneId: String
    */
   def onPickUp(playerId: String): Unit = {
     if (isPickedUp) {
-      println(s"[PropsItem] 道具[$id]已被拾取，忽略重复拾取")
+      //println(s"[PropsItem] 道具[$id]已被拾取，忽略重复拾取")
       return
     }
     isPickedUp = true
 
     val player = PlayerHolder.getPlayer(playerId)
     if (player == null) {
-      println(s"[PropsItem] 玩家[$playerId]不存在，道具拾取失败")
+      //println(s"[PropsItem] 玩家[$playerId]不存在，道具拾取失败")
       return
     }
 
@@ -62,7 +62,7 @@ class PropsItem(id: String, val config: PropsConfig, private var sceneId: String
       }
     }
 
-    println(s"[PropsItem] 道具[${config.id}]($id) 被玩家[$playerId]拾取")
+    //println(s"[PropsItem] 道具[${config.id}]($id) 被玩家[$playerId]拾取")
 
     // 通知拾取者拾取了什么道具
     PlayerChannels.info(playerId, s"拾取了道具: ${config.id}")

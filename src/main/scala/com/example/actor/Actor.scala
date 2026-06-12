@@ -54,7 +54,7 @@ abstract class Actor(aid: String) {
   def hpChange(source: Actor, damage: Int): Unit = {
     val oldHp = attr.hp
     attr.hp = attr.hp - damage
-    println(s"[HP_CHANGE] 角色[$id] 受到来源[${if (source != null) source.id else "null"}] 伤害=$damage, HP: $oldHp → ${attr.hp}")
+    //println(s"[HP_CHANGE] 角色[$id] 受到来源[${if (source != null) source.id else "null"}] 伤害=$damage, HP: $oldHp → ${attr.hp}")
     // 获取Actor当前所在的场景
     val scene = SceneHolder.getScene(movement.sceneId)
     // 如果场景不存在，抛出异常
@@ -66,7 +66,7 @@ abstract class Actor(aid: String) {
     if (oldHp > 0 && attr.hp <= 0) {
       val attackerId = if (source != null) source.id else ""
       hpBody.put("attackerId", attackerId)
-      println(s"[HP_CHANGE] 角色[$id] 死亡, 攻击者=[$attackerId]")
+      //println(s"[HP_CHANGE] 角色[$id] 死亡, 攻击者=[$attackerId]")
     }
 
     // 向场景中的所有玩家广播生命值变化消息
@@ -81,8 +81,8 @@ abstract class Actor(aid: String) {
           // 经验奖励公式：50 × 被杀者等级（与客户端离线模式一致）
           val expReward = 50 * attr.level
           val leveledUp = player.attr.addExp(expReward)
-          println(s"[EXP_GAIN] 玩家[${source.id}] 击杀玩家[$id] 获得经验 +$expReward, " +
-            s"当前exp=${player.attr.exp}/${player.attr.maxExpToLevelUp}, level=${player.attr.level}, 升级=${leveledUp}")
+          //println(s"[EXP_GAIN] 玩家[${source.id}] 击杀玩家[$id] 获得经验 +$expReward, " +
+          //  s"当前exp=${player.attr.exp}/${player.attr.maxExpToLevelUp}, level=${player.attr.level}, 升级=${leveledUp}")
 
           // 广播经验获取消息给场景中所有玩家
           val expBody = MessageBody(

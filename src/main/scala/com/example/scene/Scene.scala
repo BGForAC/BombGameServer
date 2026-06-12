@@ -37,6 +37,13 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   // 仅发送与上次不一致的字段，减少网络传输量
   private val lastSyncState: mutable.Map[String, MessageBody] = mutable.Map()
 
+  // 可复用的 MessageBody，避免每 tick 重复分配（clear + repopulate）
+  private val reusableAllPlayersBody = new MessageBody()
+  // 每玩家复用的 currentState 构建器（clear + 填充 → 仅在存储时快照克隆）
+  private val reusableCurrentState = new MessageBody()
+  // 每玩家复用的 delta 构建器
+  private val reusableDelta = new MessageBody()
+
   // 获取场景ID
   def id: String = sceneId
 
@@ -48,75 +55,78 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
    * @param tickIdx 当前tick的索引值
    */
   def tick(tickIdx: Long): Unit = {
+    // 游戏已结束：跳过所有 tick 逻辑，避免死场景空转
+    if (isGameOver) return
+
     // 遍历场景中的所有角色并调用其tick方法
     actors.values.foreach(actor => actor.tick(tickIdx))
 
     // 每帧广播玩家状态增量同步：仅发送与上次缓存相比发生变化的状态字段
     // 首次同步发送全量，后续仅发送变化的字段（动态长度），大幅减少网络传输量
     if (players.nonEmpty) {
-      val allPlayersBody = new MessageBody()
+      reusableAllPlayersBody.clear()
       players.values.foreach { p =>
         val info = p.movement.info
         if (!info.isEmpty) {
-          // 构建当前全量状态快照
-          val currentState = MessageBody(
-            Seq(
-              "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
-              "level" -> p.attr.level, "exp" -> p.attr.exp,
-              "maxExpToLevelUp" -> p.attr.maxExpToLevelUp,
-              "maxStamina" -> p.attr.maxStamina,
-              // 体力与速度（服务端权威）
-              "stamina" -> p.stamina,
-              "currentSpeed" -> p.currentSpeed,
-              "isStaminaEmpty" -> (if (p.isStaminaEmpty) 1 else 0),
-              // 炸弹状态（服务端权威）
-              "bombCount" -> (p.attr.MaxBombCount - p.bombNum),
-              "bombCooldown" -> (p.bombCooldownRemaining / 1000f),
-              "bombRecoveryTime" -> (p.bombRecoveryRemaining / 1000f),
-              "maxBombCount" -> p.attr.MaxBombCount
-            ) ++ info: _*
+          // 复用构建器：clear + 填充（避免每玩家每 tick 分配 MessageBody）
+          reusableCurrentState.clear()
+          reusableCurrentState ++= Seq(
+            "id" -> p.id, "hp" -> p.attr.hp, "maxHp" -> p.attr.maxHp,
+            "level" -> p.attr.level, "exp" -> p.attr.exp,
+            "maxExpToLevelUp" -> p.attr.maxExpToLevelUp,
+            "maxStamina" -> p.attr.maxStamina,
+            // 体力与速度（服务端权威）
+            "stamina" -> p.stamina,
+            "currentSpeed" -> p.currentSpeed,
+            "isStaminaEmpty" -> (if (p.isStaminaEmpty) 1 else 0),
+            // 炸弹状态（服务端权威）
+            "bombCount" -> (p.attr.MaxBombCount - p.bombNum),
+            "bombCooldown" -> (p.bombCooldownRemaining / 1000f),
+            "bombRecoveryTime" -> (p.bombRecoveryRemaining / 1000f),
+            "maxBombCount" -> p.attr.MaxBombCount
           )
+          reusableCurrentState ++= info
 
           // 获取上次同步的缓存状态
           val prevState = lastSyncState.get(p.id)
 
           // 构建增量消息体：仅包含变化的字段（首次同步则全量）
-          val deltaBody = if (prevState.isEmpty) {
-            currentState  // 首次同步：发送全量
+          val (deltaBody, hasChanges) = if (prevState.isEmpty) {
+            (reusableCurrentState, true)  // 首次同步：发送全量
           } else {
-            val delta = new MessageBody()
+            reusableDelta.clear()
             val prev = prevState.get
-            currentState.foreach { case (k, v) =>
+            reusableCurrentState.foreach { case (k, v) =>
               // 仅当 key 不存在于缓存，或值发生变化时才加入增量消息
               if (!prev.contains(k) || prev(k).toString != v.toString) {
-                delta.put(k, v)
+                reusableDelta.put(k, v)
               }
             }
-            delta
+            (reusableDelta, reusableDelta.nonEmpty)
           }
 
-          // 有变化才加入广播，并更新缓存
-          if (!deltaBody.isEmpty) {
-            allPlayersBody.put(p.id, deltaBody)
-            lastSyncState(p.id) = currentState
+          // 有变化才加入广播，并更新缓存（快照克隆：复用构建器在下一循环会被 clear）
+          if (hasChanges) {
+            reusableAllPlayersBody.put(p.id, MessageBody.addMessageBody(new MessageBody(), deltaBody))
+            lastSyncState(p.id) = MessageBody.addMessageBody(new MessageBody(), reusableCurrentState)
           }
         }
       }
-      if (!allPlayersBody.isEmpty) {
-        PlayerChannels.sendToAll(Message(CmdType.PLAYER_SYNC, MessageBody("players" -> allPlayersBody)))
+      if (!reusableAllPlayersBody.isEmpty) {
+        PlayerChannels.sendToAll(Message(CmdType.PLAYER_SYNC, MessageBody("players" -> reusableAllPlayersBody)))
       }
     }
 
     // 每60 tick输出一次场景摘要（约1秒，便于排查）
-    //    if (tickIdx % 60 == 0) {
-    //      val bombCount = actors.values.count(_.isInstanceOf[Bomb])
-    //      if (bombCount > 0 || players.nonEmpty) {
-    //        val hpInfo = players.values.map(p =>
-    //          s"${p.id}:HP=${p.attr.hp}/${p.attr.maxHp} Lv.${p.attr.level} Exp=${p.attr.exp}"
-    //        ).mkString(", ")
-    //        println(s"[Scene.tick] tick#$tickIdx 场景[$sceneId]: 总actor=${actors.size}, 炸弹=$bombCount, 玩家=${players.size} [$hpInfo]")
-    //      }
-    //    }
+//    if (tickIdx % 60 == 0) {
+//      val bombCount = actors.values.count(_.isInstanceOf[Bomb])
+//      if (bombCount > 0 || players.nonEmpty) {
+//        val hpInfo = players.values.map(p =>
+//          s"${p.id}:HP=${p.attr.hp}/${p.attr.maxHp} Lv.${p.attr.level} Exp=${p.attr.exp}"
+//        ).mkString(", ")
+//        println(s"[Scene.tick] tick#$tickIdx 场景[$sceneId]: 总actor=${actors.size}, 炸弹=$bombCount, 玩家=${players.size} [$hpInfo]")
+//      }
+//    }
 
     // 游戏结束检测：存活玩家 ≤ 1 时判定游戏结束（需要至少2名玩家才开始检测）
     if (!isGameOver && players.size > 1) {
@@ -124,7 +134,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
       if (aliveCount <= 1) {
         isGameOver = true
         val winnerId = if (aliveCount == 1) players.values.find(_.attr.hp > 0).map(_.id).orNull else null
-        println(s"[Scene.GameOver] 场景[$sceneId] 游戏结束, 存活玩家=$aliveCount, 胜者=$winnerId, 随机匹配=$isRandomMatch")
+        //println(s"[Scene.GameOver] 场景[$sceneId] 游戏结束, 存活玩家=$aliveCount, 胜者=$winnerId, 随机匹配=$isRandomMatch")
         // 向所有玩家广播游戏结束消息
         players.values.foreach { p =>
           PlayerChannels.send(p.id, Message(CmdType.GAME_OVER, MessageBody(
@@ -135,14 +145,15 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
         // 通知房间处理器游戏结束（房间模式下自动返回房间）
         com.example.holder.BaseGameRoomHolder.onGameOver(sceneId, isRandomMatch)
 
-        // 清退所有玩家：从场景数据结构中移除，清理 actor 的场景引用
-        // 不调用 onExit（避免广播无意义的 EXIT_SCENE），直接清理内部映射
-        players.values.foreach { player =>
-          actors -= player.id
-          player.setOutScene(this)
+        // 清退所有玩家与残留 Actor：清理 actors Map 并解除场景引用
+        // 注意：不能只删 players，Bomb 等非玩家 Actor 也可能残留在 actors 中
+        actors.values.foreach { actor =>
+          actor.setOutScene(this)
         }
+        actors.clear()
         players.clear()
-        println(s"[Scene.GameOver] 场景[$sceneId] 已清退所有玩家，剩余actor=${actors.size}")
+        lastSyncState.clear()  // 清理增量同步缓存，避免 Scene GC 前的短暂内存占用
+        //println(s"[Scene.GameOver] 场景[$sceneId] 已清退所有玩家和 Actor，剩余actor=0")
       }
     }
   }
@@ -160,9 +171,9 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
     actor match {
       case player: Player =>
         players += (player.id -> player)
-      //        println(s"[Scene.onEnter] 玩家[${player.id}]进入场景[$sceneId], 当前玩家=${players.size}")
+//        println(s"[Scene.onEnter] 玩家[${player.id}]进入场景[$sceneId], 当前玩家=${players.size}")
       case bomb: Bomb =>
-      //        println(s"[Scene.onEnter] 炸弹[${bomb.id}]进入场景[$sceneId], 当前actor总数=${actors.size}")
+//        println(s"[Scene.onEnter] 炸弹[${bomb.id}]进入场景[$sceneId], 当前actor总数=${actors.size}")
       case _ =>
     }
   }
@@ -226,7 +237,7 @@ abstract class Scene(sceneId: String, sceneDef: SceneDef) {
   def getBombsAtGrid(gridX: Int, gridZ: Int, gridSize: Int = 100, offsetDistance: Int = 15): List[Bomb] = {
     actors.values.collect {
       case bomb: Bomb if Math.floor(bomb.movement.info.getInt("x").toDouble / gridSize).toInt + offsetDistance == gridX &&
-        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
+                        Math.floor(bomb.movement.info.getInt("z").toDouble / gridSize).toInt + offsetDistance == gridZ =>
         bomb
     }.toList
   }

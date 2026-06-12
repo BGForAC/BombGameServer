@@ -58,12 +58,12 @@ class Movement(owner: Actor) {
   def setOutScene(scene: Scene): Unit = {
     // 检查角色是否在要离开的场景中
     if (sceneId == null) {
-      println(s"玩家${owner.id}尝试退出一个不在的场景，当前场景：null，尝试退出的场景：${scene.id}")
+      //println(s"玩家${owner.id}尝试退出一个不在的场景，当前场景：null，尝试退出的场景：${scene.id}")
       return
     }
     // 检查场景ID是否匹配
     if (sceneId != scene.id) {
-      println(s"玩家${owner.id}尝试退出一个不在的场景，当前场景：$sceneId，尝试退出的场景：${scene.id}")
+      //println(s"玩家${owner.id}尝试退出一个不在的场景，当前场景：$sceneId，尝试退出的场景：${scene.id}")
       return
     }
 
@@ -93,7 +93,7 @@ class Movement(owner: Actor) {
     // 获取当前场景
     val curScene = SceneHolder.getScene(sceneId)
     if (curScene == null) {
-      println(s"玩家${owner.id}尝试在不存在的场景移动，当前场景：$sceneId")
+      //println(s"玩家${owner.id}尝试在不存在的场景移动，当前场景：$sceneId")
       return
     }
     // 保存上一次的位置

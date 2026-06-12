@@ -82,7 +82,7 @@ object BaseGameSceneHolder extends ITick {
         if (!playerSet.contains(playerId)) {
           matchQueue += playerId
           playerSet.add(playerId)
-          println(s"玩家[$playerId]加入匹配队列")
+          //println(s"玩家[$playerId]加入匹配队列")
         }
       }
     }
@@ -96,7 +96,7 @@ object BaseGameSceneHolder extends ITick {
         if (playerSet.contains(playerId)) {
           matchQueue -= playerId
           playerSet.remove(playerId)
-          println(s"玩家[$playerId]离开匹配队列")
+          //println(s"玩家[$playerId]离开匹配队列")
         }
       }
     }
@@ -121,7 +121,7 @@ object BaseGameSceneHolder extends ITick {
           if (offLinePlayers.nonEmpty) {
             // 移除离线玩家
             offLinePlayers.foreach { case (playerId, _) =>
-              println(s"玩家[$playerId]已离线，移出匹配队列")
+              //println(s"玩家[$playerId]已离线，移出匹配队列")
               removeFromMatchQueue(playerId)
             }
           } else {
@@ -148,7 +148,7 @@ object BaseGameSceneHolder extends ITick {
 
             // 验证玩家索引信息是否正确
             if (playerIdxInfo.size != players.size) {
-              println(s"玩家索引信息数量[${playerIdxInfo.size}]与玩家数量[${players.size}]不匹配")
+              //println(s"玩家索引信息数量[${playerIdxInfo.size}]与玩家数量[${players.size}]不匹配")
               // 发送错误消息给所有玩家
               players.foreach { case (playerId, _) =>
                 PlayerChannels.sendError(playerId, "匹配失败，有玩家没有成功进入场景")
@@ -157,10 +157,10 @@ object BaseGameSceneHolder extends ITick {
             }
 
             // 构建玩家信息字符串
-            var playersInfo = MessageBody()
+            val playersInfo = new MessageBody()
             playerIdxInfo.keys.foreach( playerId => {
               val player = PlayerHolder.getPlayer(playerId)
-              playersInfo = MessageBody.addMessageBody(playersInfo, MessageBody(playerId -> player.baseInfoStr()))
+              playersInfo.put(playerId, player.baseInfoStr())
             })
             // 发送进入游戏场景的消息给所有玩家
             players.foreach { case (_, player) =>
@@ -169,7 +169,7 @@ object BaseGameSceneHolder extends ITick {
             }
 
             // 打印匹配成功信息
-            println(s"匹配成功，玩家[${players.mkString(",")}]进入场景")
+            //println(s"匹配成功，玩家[${players.mkString(",")}]进入场景")
           }
         }
       }

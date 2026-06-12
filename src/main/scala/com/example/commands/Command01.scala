@@ -41,7 +41,7 @@ object Command01 extends ISystemCommand {
     // 返回成功响应，包含玩家ID
     ctx.writeAndFlush(message.response(MessageBody("result" -> "success", "playerId" -> playerId)))
     // 打印连接信息
-    println(s"Player $playerId has connected.")
+    //println(s"Player $playerId has connected.")
   }
 
   /**
@@ -64,7 +64,7 @@ object Command01 extends ISystemCommand {
   def handler03(ctx: ChannelHandlerContext, message: Message): Unit ={
     val playerId = ctx.channel().attr(MasterHandler.ATTR_PLAYER_ID).get()
     PlayerHolder.getPlayer(playerId).onDisConnect()
-    println(s"Player $playerId has disconnected.")
+    //println(s"Player $playerId has disconnected.")
   }
 
 

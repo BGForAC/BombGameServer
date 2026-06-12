@@ -4,6 +4,7 @@ import com.example.commands.CmdType
 import com.example.exception.ExceptionType
 import com.example.message.{ErrorMessage, Message, MessageBody}
 import com.example.tick.ITick
+import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 
 /**
@@ -79,11 +80,30 @@ object PlayerChannels extends ITick {
   }
 
   /**
-   * 向所有玩家广播消息
+   * 向所有玩家广播消息（预序列化优化：消息只编码一次，复用给所有通道）
    * @param msg 要广播的消息对象
    */
   def sendToAll(msg: Message): Unit = {
-    channels.keys.foreach(send(_, msg))  // 遍历所有玩家ID并发送消息
+    if (channels.isEmpty) return
+
+    // 预编码消息到 wire format：[4B长度前缀][4B cmdType][body bytes]
+    val bodyBytes = msg.getBody.toBytes
+    val totalLen = 4 + bodyBytes.length
+    val encoded = Unpooled.buffer(4 + totalLen)
+    try {
+      encoded.writeInt(totalLen)      // 长度前缀（匹配 MessageEncoder 格式）
+      encoded.writeInt(msg.getCommand) // cmdType
+      encoded.writeBytes(bodyBytes)    // body
+
+      // 写入所有通道（只 write 不 flush，批量冲刷）
+      channels.values.foreach { ctx =>
+        ctx.write(encoded.retainedSlice())
+      }
+      // 批量 flush 所有通道
+      channels.values.foreach(_.flush())
+    } finally {
+      encoded.release()  // 释放原始 buffer（各通道的 retainedSlice 依然有效）
+    }
   }
 
   /**

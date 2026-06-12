@@ -44,7 +44,7 @@ public class StressTestClient {
 
     static final String SERVER_HOST = System.getProperty("stress.host", "127.0.0.1");
     static final int SERVER_PORT = Integer.getInteger("stress.port", 25565);
-    static final int CLIENT_COUNT = Integer.getInteger("stress.clients", 100);
+    static final int CLIENT_COUNT = Integer.getInteger("stress.clients", 800);
     static final int TEST_DURATION_SECONDS = Integer.getInteger("stress.duration", 600);
     static final int OP_INTERVAL_MIN_MS = Integer.getInteger("stress.opMinMs", 10);
     static final int OP_INTERVAL_MAX_MS = Integer.getInteger("stress.opMaxMs", 50);
@@ -69,7 +69,7 @@ public class StressTestClient {
     static final int DEFAULT_MAX_BOMB_COUNT = 1;
 
     // 延迟监测：被监测客户端比例 (0.0~1.0)，0 表示不监测任何客户端
-    static final double MONITORED_RATIO = Double.parseDouble(System.getProperty("stress.monitoredRatio", "0.1"));
+    static final double MONITORED_RATIO = Double.parseDouble(System.getProperty("stress.monitoredRatio", "0.025"));
 
     // ==================== 命令类型常量 ====================
 
@@ -962,8 +962,8 @@ public class StressTestClient {
 
     private static void printBanner() {
         System.out.println("  ╔══════════════════════════════════════════════╗");
-        System.out.println("  ║    游戏服务器压力测试客户端 v2.0              ║");
-        System.out.println("  ║    Stress Test Client - Realistic Mode        ║");
+        System.out.println("  ║    游戏服务器压力测试客户端 v2.0                 ║");
+        System.out.println("  ║    Stress Test Client - Realistic Mode       ║");
         System.out.println("  ╚══════════════════════════════════════════════╝");
     }
 }

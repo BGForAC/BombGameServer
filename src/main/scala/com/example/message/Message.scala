@@ -217,13 +217,12 @@ object MessageBody {
     println(a)*/
 
 
-    println(initMap("1").toJsonString)
-
-
-
+    //println(initMap("1").toJsonString)
+    
 
 
   }
+
 
   def initMap(typ: String): MessageBody = {
     // 构建属性文件路径

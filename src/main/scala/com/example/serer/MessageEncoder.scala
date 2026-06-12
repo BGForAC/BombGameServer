@@ -27,6 +27,9 @@ object MessageEncoder extends MessageToByteEncoder[AnyRef] {
         // 先写入消息长度，再写入消息内容
         out.writeInt(buffer.capacity())
         out.writeBytes(buffer)
+      // 预编码的 ByteBuf：已经包含 [长度前缀 + cmdType + body]，直接透传
+      case buf: ByteBuf =>
+        out.writeBytes(buf)
       // 其他不支持的类型抛出异常
       case _ => throw new IllegalArgumentException("Unsupported message type")
     }

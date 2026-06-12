@@ -34,7 +34,7 @@ object PropsManager {
     val filePath = "props/props_config.json"
     val inputStream = getClass.getClassLoader.getResourceAsStream(filePath)
     if (inputStream == null) {
-      println(s"[PropsManager] 道具配置文件[$filePath]不存在，道具系统将不启用")
+      //println(s"[PropsManager] 道具配置文件[$filePath]不存在，道具系统将不启用")
       isInit = true
       return
     }
@@ -48,7 +48,7 @@ object PropsManager {
       val propsArray = root.get("props") match {
         case Some(mb: MessageBody) => mb
         case _ =>
-          println("[PropsManager] 道具配置格式错误")
+          //println("[PropsManager] 道具配置格式错误")
           isInit = true
           return
       }
@@ -76,7 +76,7 @@ object PropsManager {
         weightPre(i) = totalWeight
       }
 
-      println(s"[PropsManager] 成功加载 ${propsConfigs.size} 个道具配置，总权重=$totalWeight，生成概率=$propsGenerationProbability%")
+      //println(s"[PropsManager] 成功加载 ${propsConfigs.size} 个道具配置，总权重=$totalWeight，生成概率=$propsGenerationProbability%")
       isInit = true
     } finally {
       inputStream.close()

@@ -21,26 +21,26 @@ object Command08 extends IPlayerCommand {
     val itemId = message.getString("itemId")
 
     if (itemId.isEmpty) {
-      println(s"[Command08] 玩家[$playerId]发送的道具拾取消息缺少 itemId")
+      //println(s"[Command08] 玩家[$playerId]发送的道具拾取消息缺少 itemId")
       return
     }
 
     val player = PlayerHolder.getPlayer(playerId)
     if (player == null) {
-      println(s"[Command08] 玩家[$playerId]不存在，道具拾取失败")
+      //println(s"[Command08] 玩家[$playerId]不存在，道具拾取失败")
       return
     }
 
     // 获取玩家当前所在场景
     val sceneId = player.movement.sceneId
     if (sceneId == null) {
-      println(s"[Command08] 玩家[$playerId]不在任何场景中")
+      //println(s"[Command08] 玩家[$playerId]不在任何场景中")
       return
     }
 
     val scene = SceneHolder.getScene(sceneId)
     if (scene == null) {
-      println(s"[Command08] 场景[$sceneId]不存在")
+      //println(s"[Command08] 场景[$sceneId]不存在")
       return
     }
 
@@ -62,10 +62,10 @@ object Command08 extends IPlayerCommand {
         if (dist <= 200) {
           propsItem.onPickUp(playerId)
         } else {
-          println(s"[Command08] 玩家[$playerId]距离道具[$itemId]太远 ($dist)，拒绝拾取")
+          //println(s"[Command08] 玩家[$playerId]距离道具[$itemId]太远 ($dist)，拒绝拾取")
         }
       case _ =>
-        println(s"[Command08] 道具[$itemId]不存在或已被拾取")
+        //println(s"[Command08] 道具[$itemId]不存在或已被拾取")
     }
   }
 }

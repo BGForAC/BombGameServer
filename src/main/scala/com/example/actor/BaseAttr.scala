@@ -116,7 +116,7 @@ class BaseAttr(owner: Actor) {
             case t if t == classOf[Long] => field.set(this, value.toLong)
             case t if t == classOf[Boolean] => field.set(this, value.toBoolean)
             case _ =>
-              println(s"不支持的属性类型：${field.getType}，属性名：$name")
+              //println(s"不支持的属性类型：${field.getType}，属性名：$name")
           }
         }
         // 初始化生命值为最大生命值
@@ -165,10 +165,10 @@ class BaseAttr(owner: Actor) {
     bombCooldown = Math.max(0.1f, bombCooldown - bombCooldownGrowth)
     bombRecoveryTime = Math.max(0.5f, bombRecoveryTime - bombRecoveryTimeGrowth)
 
-    println(s"[LevelUp] 角色[${owner.id}] 升级: Lv.${level - 1} → Lv.$level, " +
-      s"exp=$exp/$maxExpToLevelUp, maxHp=$maxHp, speed=$speed, maxStamina=$maxStamina, " +
-      s"bombCount=$maxBombCount, bombDamage=$bombDamage, bombRadius=$bombRadius, " +
-      s"bombFuseTime=$bombFuseTime, bombCooldown=$bombCooldown, bombRecoveryTime=$bombRecoveryTime")
+    //println(s"[LevelUp] 角色[${owner.id}] 升级: Lv.${level - 1} → Lv.$level, " +
+    //  s"exp=$exp/$maxExpToLevelUp, maxHp=$maxHp, speed=$speed, maxStamina=$maxStamina, " +
+    //  s"bombCount=$maxBombCount, bombDamage=$bombDamage, bombRadius=$bombRadius, " +
+    //  s"bombFuseTime=$bombFuseTime, bombCooldown=$bombCooldown, bombRecoveryTime=$bombRecoveryTime")
   }
 }
 

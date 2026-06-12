@@ -17,7 +17,7 @@ object Command05 extends IPlayerCommand {
     // 从 PlayerHolder 中获取玩家对象
     val player = PlayerHolder.getPlayer(playerId)
     if (player == null) {
-      println(s"[PutBomb] 玩家[$playerId]不存在，忽略放置请求")
+      //println(s"[PutBomb] 玩家[$playerId]不存在，忽略放置请求")
       return
     }
 
@@ -55,7 +55,7 @@ object Command05 extends IPlayerCommand {
         )))
       }
     } else {
-      println(s"[PutBomb] 警告: 场景[$sceneId]不存在，无法广播PUT_BOMB")
+      //println(s"[PutBomb] 警告: 场景[$sceneId]不存在，无法广播PUT_BOMB")
     }
   }
 }
